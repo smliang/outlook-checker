@@ -1,0 +1,22 @@
+{
+    "name": "Outlook Checker",
+    "description": "A browser action with a popup to read, edit, and delete emails from Outlook",
+    "version": "1.1",
+    "manifest_version": 3,
+    "permissions": [
+      "alarms",
+      "notifications",
+      "storage",
+      "identity"
+    ],
+    "background":{
+        "service_worker": "background.js"
+    },
+    "action": {
+      "default_title": "Outlook Checker",
+      "default_icon": "icons/icon.png",
+      "default_popup": "popup.html"
+    }
+    
+  }
+  
