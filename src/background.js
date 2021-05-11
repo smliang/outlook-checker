@@ -9,27 +9,45 @@ const outlookHostFilter = {
 };
 let mainMenuId;
 
+var cache = {}; //fixme will i ever have to load this cache???
+
 
 chrome.runtime.onInstalled.addListener(function () {
     //set to logout state
     console.log("hello");
-
     setUILogout();
-    chrome.alarms.create('update', { periodInMinutes: .5 });
 
+});
+
+chrome.storage.onChanged.addListener(function (changes, namespace) {
+    for (let [key, {oldValue, newValue} ] of Object.entries(changes)) {
+      
+        let keyname = `${key}`;
+        cache[keyname] = newValue;
+        console.log("updated " + keyname);
+    }
+    //console.log("CACHE AFTER SAVE", cache);
 });
 
 chrome.runtime.onMessage.addListener(onMessage);
 chrome.alarms.onAlarm.addListener(onAlarm);
 
 function setUILogout() {
-    chrome.storage.local.set({ login: false });
+    chrome.storage.local.clear(() => {
+        console.log("logout: storage cleared")
+        chrome.storage.local.set({ login: false })
+    });
+    
+
     //chrome.storage.local.get(['login'], function(result){console.log(result.login)});
     //TODO: add new loggedout icon chrome.browserAction.setIcon({path: 'PUTPATHHERE'});
     // chrome.browserAction.setBadgeText({text: ''});
 
     //change to login popup
     chrome.action.setPopup({ 'popup': 'popup_logged_out.html' });
+
+    //stop refresh timer
+    chrome.alarms.clearAll();
 }
 
 function setUILogin() {
@@ -39,6 +57,7 @@ function setUILogin() {
     //   chrome.browserAction.setBadgeText({text: ''});
     chrome.action.setPopup({ 'popup': 'popup.html' });
     update();
+    chrome.alarms.create('update', { periodInMinutes: .5 });
 }
 
 //handler to log in user
@@ -96,27 +115,36 @@ async function login() {
         })
     });
 
-    console.log("finished token attempt");
-
     if (!res.ok) {
         await console.log(res.json());
         throw new Error('HTTP error: status = ' + res.status);
     }
 
     res = await res.json();
-    console.log("token good?");
-    saveToken(res);
-    console.log(res);
+    await saveToken(res);
+    console.log("logged in!");
     setUILogin();
 }
 
-function saveToken(res) {
-    console.log("token: " + res.access_token);
-    chrome.storage.local.get(['token'], function (res) { console.log("check token " + res.token) });
-    chrome.storage.local.set({ token: res.access_token });
-    chrome.storage.local.set({ refresh_token: res.refresh_token });
+
+async function saveToken(res) {
     const expiration = new Date(Date.now() + parseInt(res.expires_in) * 1000);
-    chrome.storage.local.set({ expiration: expiration.getTime().toString() });
+    //chrome.storage.local.get(['token'], function (res) { console.log("check token after save" + res.token) });
+    var save = new Promise( (resolve) => {
+            chrome.storage.local.set({ 
+                token: res.access_token,
+                refresh_token: res.refresh_token,
+                expiration: expiration.getTime().toString()
+            }, () => {
+                console.log("finished saving token info, expiration: " + expiration);
+                resolve();
+            });
+    });
+    const running = await save;
+    //probably have to rethink this entire thing, but lets wait like 1 second to see if the event handler will run
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("done save and wait!");
+    
 }
 
 async function onAlarm(alarm) {
@@ -132,13 +160,12 @@ async function update() {
 }
 
 async function checkRefreshToken() {
-    const token = chrome.storage.local.get(['token'], function (res) { return res.token });
-    if (token === null) {
+    if (cache.token === null) {
         console.log("logged out!");
         setUILogout();
         window.chrome.runtime.sendMessage({ login: false });
     }
-    const expiration = new Date(parseInt(chrome.storage.local.get(['expiration'], function (exp) { return exp.expiration })));
+    const expiration = new Date(parseInt(cache.expiration));
     let refreshTime = new Date(expiration.getTime() - refreshWindowMS);
     if (new Date() >= refreshTime) {
         await refreshToken();
@@ -152,7 +179,7 @@ async function refreshToken() {
         body: new URLSearchParams({
             'client_id': adClientId,
             'scope': 'Mail.ReadWrite offline_access',
-            'refresh_token': chrome.storage.local.get(['refresh_token'], function (res) { return res.refresh_token }),
+            'refresh_token': cache.refresh_token,
             'grant_type': 'refresh_token'
         })
     });
@@ -164,38 +191,28 @@ async function refreshToken() {
     }
 
     res = await res.json();
-    saveToken(res);
-}
-
-function getToken(){
-    return new Promise((resolve) => {
-        chrome.storage.local.get(['token'], (res) => { resolve(res.token)} );
-    })
+    await saveToken(res);
 }
 
 async function getUnreadCount() {
     console.log("checking unread count");
-    chrome.storage.local.get(['token'], (res) => {
-        console.log(res.token);
-        var token = res.token;
-        console.log("check token: " + token);
-        let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox?$select=unreadItemCount', {
-            headers: new Headers({
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json'
-            })
-        });
+    //TODO for now to avoid errors im just gonna return if token is null
+    if(cache.token == undefined) return;
+    console.log("check token before getting unread: " + cache.token.substring(0, 10));
+    let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox?$select=unreadItemCount', {
+        headers: new Headers({
+            'Authorization': 'Bearer ' + cache.token,
+            'Content-Type': 'application/json'
+        })
     });
-    
 
-        if (!res.ok) {
-            await console.log(res.json());
-            throw new Error('HTTP error: status = ' + res.status);
-        }
+    if (!res.ok) {
+        await console.log(res.json());
+        throw new Error('HTTP error: status = ' + res.status);
+    }
 
-        res = await res.json();
-        return res.unreadItemCount;
-
+    res = await res.json();
+    return res.unreadItemCount;
 }
 
 function setUnreadCount(count) {
