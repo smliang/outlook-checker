@@ -7,7 +7,6 @@ const tokenEndpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0/toke
 const outlookHostFilter = {
     url: [{ hostEquals: outlookHost }]
 };
-let mainMenuId;
 
 var cache = {}; //fixme will i ever have to load this cache???
 
@@ -24,12 +23,13 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
       
         let keyname = `${key}`;
         cache[keyname] = newValue;
-        console.log("updated " + keyname);
+        //console.log("updated " + keyname);
     }
     //console.log("CACHE AFTER SAVE", cache);
 });
 
 chrome.runtime.onMessage.addListener(onMessage);
+
 chrome.alarms.onAlarm.addListener(onAlarm);
 
 function setUILogout() {
@@ -56,6 +56,7 @@ function setUILogin() {
     //   chrome.browserAction.setBadgeBackgroundColor({color: [208, 0, 24, 255]});
     //   chrome.browserAction.setBadgeText({text: ''});
     chrome.action.setPopup({ 'popup': 'popup.html' });
+    getInfo();
     update();
     chrome.alarms.create('update', { periodInMinutes: .5 });
 }
@@ -65,8 +66,6 @@ async function onMessage(request, sender, sendResponse) {
     //console.log("got message", request)
     if (request.login) {
         await login();
-        //setUILogin();
-        // await update();
     }
 }
 
@@ -123,6 +122,7 @@ async function login() {
     res = await res.json();
     await saveToken(res);
     console.log("logged in!");
+    
     setUILogin();
 }
 
@@ -147,6 +147,32 @@ async function saveToken(res) {
     
 }
 
+//gets account info for display
+async function getInfo(){
+    let res = await fetch('https://graph.microsoft.com/v1.0/me/?$select=displayName,mail', {
+        headers: new Headers({
+            'Authorization': 'Bearer ' + cache.token,
+            'Content-Type': 'application/json'
+        })
+    });
+
+    if (!res.ok) {
+        await console.log(res.json());
+        throw new Error('HTTP error: status = ' + res.status);
+    }
+
+    res = await res.json();
+    await new Promise(resolve => { 
+        chrome.storage.local.set({
+            displayName: res.displayName,
+            email: res.mail
+        }, () => {
+            console.log(res.displayName, res.mail);
+            resolve;
+        })
+    })
+}
+
 async function onAlarm(alarm) {
     await update();
 }
@@ -155,15 +181,18 @@ async function update() {
     console.log("update!");
     await checkRefreshToken();
     const count = await getUnreadCount();
-    setUnreadCount(count);
-    //todo: add email displays
+    console.log("count: "+ count);
+    if(count){ 
+        setUnreadCount(count);
+        chrome.storage.local.set({unreadCount: count});
+    }
 }
 
 async function checkRefreshToken() {
     if (cache.token === null) {
         console.log("logged out!");
         setUILogout();
-        window.chrome.runtime.sendMessage({ login: false });
+        chrome.runtime.sendMessage({ login: false });
     }
     const expiration = new Date(parseInt(cache.expiration));
     let refreshTime = new Date(expiration.getTime() - refreshWindowMS);
@@ -217,6 +246,7 @@ async function getUnreadCount() {
 
 function setUnreadCount(count) {
     chrome.action.setBadgeBackgroundColor({ color: [208, 0, 24, 255] });
+    console.log("count: "+count);
     chrome.action.setBadgeText({
         text: count === 0 ? '' : count.toString()
     });

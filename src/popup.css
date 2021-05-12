@@ -1,6 +1,109 @@
-.title {
+* {
+    font-family: Sans-serif;
+}
+
+h1 {
+    font-weight: bold;
+}
+
+.title, .idBar {
     
     display: flex;
     align-items: center;
+    padding-left: 8px;
+    padding-right: 8px;
+
+}
+
+.title {
+    font-size: 12px;
+}
+
+.title * , .idBar * {
+ margin: 8 0 8 0;
+}
+
+.idBar {
+    background-color: lightgrey;
+    font-size: 16px;
+    height: 38px;
+
+}
+
+body{
+    margin:0px;
+    margin-top:8px;
+}
+
+#user{
+    font-weight: bold;
+}
+
+.login-box{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.go-to-inbox{
+    cursor:pointer;
+}
+
+.container{
+    width:100%;
+    max-width:none;
+    margin:0;
+}
+
+.email {
+    padding: 5px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom:1px solid rgba(211, 211, 211, 0.39);
+}
+
+.email:hover{
+    background-color:rgba(211, 211, 211, 0.39);
+}
+
+.email p {
+    margin-bottom:0;
+    font-size:14px;
+    
+}
+
+.body{
+    font-size:14px;
+    line-height: normal;
+}
+
+.subject,.sender{
+    font-weight:bold;
+}
+
+.subject{
+    line-height: .8;
+    padding-bottom: 6px;
+}
+
+.icon{
+    align-items: center;
+    display: flex;
+    margin-right: 15px;
+
+}
+
+.initial{
+    display:inline-block;
+    font-size:1.5em;
+    min-width:2em;
+    min-height:2em;
+    line-height:2em;
+    text-align:center;
+    border-radius:50%;
+    background:#0d6efd;
+    vertical-align:middle;
+    margin-right:1em;
+    color:white;
 
 }

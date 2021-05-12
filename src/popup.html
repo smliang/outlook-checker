@@ -1,11 +1,38 @@
 <html>
     <head>
+        <link rel="stylesheet" href="bootstrap-5.0.0/css/bootstrap.min.css">
         <link rel="stylesheet" href="popup.css">
     </head>
     <body style="width: 600px">
         <div class="title">
-            <img src="icons/icon.png" style="width: 30px; padding-right: 5px">
-            <h1>Outlook Checker</h1>
+            <img src="icons/icon.png" class="go-to-inbox" style="width: 30px; padding-right: 5px">
+            <h1 class="go-to-inbox">Outlook Checker</h1>
         </div>
+        <div class="idBar">
+            <p id="user">PlaceHolder</p>
+            <p id="email" style="margin-left:5px; margin-right:auto">second@placeholder.net</p>
+            <span class="badge rounded-pill bg-primary go-to-inbox"><span id="numUnread">#</span> Unread</span>
+        </div>
+
+        <div class="container">
+            <div id="emails" class="col">
+                
+                <!--div class="row email"> THIS STUFF IS HANDLED BY popup.js updateEmailDisplay()
+                    <div class="col-1 icon">
+                        <h1 class="initial">C</h1>
+                    </div>
+                    <div class="col">
+                        <p class="sender">Sender Name<span style="font-style:italic; font-weight:normal"> email@sender.net</span></p>
+                        <p class="subject">Email Subject Will Go Here</p>
+                        <p class="body">the body preview of this wonderful email will go here. i hope it looks good. the body preview of this wonderful email will go here. i hope it looks good. </p>
+                    </div>
+                </div-->
+               
+            </div>
+        </div>
+   
+
+        <script src="bootstrap-5.0.0/js/bootstrap.bundle.js"></script>
+        <script src="popup.js"></script>
     </body>
 </html>

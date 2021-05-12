@@ -7,7 +7,8 @@
       "alarms",
       "notifications",
       "storage",
-      "identity"
+      "identity",
+      "tabs"
     ],
     "background":{
         "service_worker": "background.js"

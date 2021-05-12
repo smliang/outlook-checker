@@ -1,7 +1,7 @@
 function login() {
     console.log("clicked!");
-    window.chrome.runtime.sendMessage({login: true});
-    window.close();
+    chrome.runtime.sendMessage({login: true});
+   // setTimeout(window.close(), 2000);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
