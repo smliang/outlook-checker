@@ -23,7 +23,7 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
       
         let keyname = `${key}`;
         cache[keyname] = newValue;
-        //console.log("updated " + keyname);
+        if(keyname == "refresh_token:") console.log("updated " + keyname);
     }
     //console.log("CACHE AFTER SAVE", cache);
 });
@@ -32,9 +32,22 @@ chrome.runtime.onMessage.addListener(onMessage);
 
 chrome.alarms.onAlarm.addListener(onAlarm);
 
+async function setCache(){
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.get(null, (items) => {
+            if (chrome.runtime.lastError) {
+                return reject(chrome.runtime.lastError);
+            }
+            Object.assign(cache, items);
+            resolve;
+        })
+    })
+}
+
 function setUILogout() {
     chrome.storage.local.clear(() => {
-        console.log("logout: storage cleared")
+        console.log("logout: storage cleared");
+        alert("storage cleared");
         chrome.storage.local.set({ login: false })
     });
     
@@ -129,6 +142,7 @@ async function login() {
 
 async function saveToken(res) {
     const expiration = new Date(Date.now() + parseInt(res.expires_in) * 1000);
+    console.log("refresh token at save: ", res.refresh_token);
     //chrome.storage.local.get(['token'], function (res) { console.log("check token after save" + res.token) });
     var save = new Promise( (resolve) => {
             chrome.storage.local.set({ 
@@ -182,13 +196,20 @@ async function update() {
     await checkRefreshToken();
     const count = await getUnreadCount();
     console.log("count: "+ count);
-    if(count){ 
+    if(count !== null | count !== undefined){ 
         setUnreadCount(count);
         chrome.storage.local.set({unreadCount: count});
     }
 }
 
 async function checkRefreshToken() {
+    //might've just woken up, need to reestablish cache
+    if(cache.token == null){
+        console.log("resetting cache");
+        await setCache();
+    }
+
+    //welp looks like something else went wrong
     if (cache.token === null) {
         console.log("logged out!");
         setUILogout();
@@ -202,7 +223,7 @@ async function checkRefreshToken() {
 }
 
 async function refreshToken() {
-    console.log("refresh!");
+    console.log("refresh! token: ", cache.refresh_token);
     let res = await fetch(tokenEndpoint, {
         method: 'POST',
         body: new URLSearchParams({
@@ -226,7 +247,10 @@ async function refreshToken() {
 async function getUnreadCount() {
     console.log("checking unread count");
     //TODO for now to avoid errors im just gonna return if token is null
-    if(cache.token == undefined) return;
+    if(cache.token == undefined) {
+        console.log("token undefined!");
+        refreshToken();
+    };
     console.log("check token before getting unread: " + cache.token.substring(0, 10));
     let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox?$select=unreadItemCount', {
         headers: new Headers({
