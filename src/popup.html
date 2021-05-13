@@ -3,19 +3,25 @@
         <link rel="stylesheet" href="bootstrap-5.0.0/css/bootstrap.min.css">
         <link rel="stylesheet" href="popup.css">
     </head>
-    <body style="width: 600px">
-        <div class="title">
-            <img src="icons/icon.png" class="go-to-inbox" style="width: 30px; padding-right: 5px">
+    <body class="ms-Fabric" style="width: 600px">
+        <div class="title ms-bgColor-themePrimary">
+            <!--img src="icons/icon.png" class="go-to-inbox" style="width: 30px; padding-right: 5px"-->
             <h1 class="go-to-inbox">Outlook Checker</h1>
         </div>
-        <div class="idBar">
+        <div class="idBar ms-bgColor-neutralLight">
             <p id="user">PlaceHolder</p>
             <p id="email" style="margin-left:5px; margin-right:auto">second@placeholder.net</p>
-            <span class="badge rounded-pill bg-primary go-to-inbox" style="visibility:collapse"><span id="numUnread"></span> Unread</span>
+            <span class="badge rounded-pill go-to-inbox ms-bgColor-themeSecondary" style="visibility:collapse"><span id="numUnread"></span> Unread</span>
+            <div class="toolbar-buttons">
+                <button class="btn icon-button toolbar" id="mark-all" title="Mark All As Read"><i class="ms-Icon ms-Icon--Read toolbar-icon"></i></button>
+                <button class="btn icon-button toolbar" id="refresh-button" title="Refresh"><i class="ms-Icon ms-Icon--Refresh toolbar-icon"></i></button>
+            </div>
+            
         </div>
 
         <div class="container">
             <div id="emails" class="col">
+                
 
                 <!--div class="row email" data-idx="0"> <--THIS STUFF IS HANDLED BY popup.js updateEmailDisplay()->
                     <div class="col-1 icon">

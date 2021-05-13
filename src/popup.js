@@ -64,10 +64,14 @@ function updateEmailDisplay(){
         //unread email, post!
         if(!email.isRead){
             //console.log("email: ", i);
+            email.displayed = true;
             let initial = email.from.emailAddress.name.match("[a-zA-Z]");
+            let color = getRandomColor();
+            email.color = color;
             let sendDateTime = new Date(email.sentDateTime); // "2021-05-11T18:24:08Z"
             let minute = sendDateTime.getMinutes().toString();
-            let d = sendDateTime.getHours()%12 + ":" + (minute < 10 ? "0"+ minute : minute);
+            let hour = sendDateTime.getHours()%12;
+            let d = (hour == 0 ? 1 : hour) + ":" + (minute < 10 ? "0"+ minute : minute);
             d = d + (sendDateTime.getHours() > 12 ? " pm" : " am");
             
             //for setting up flagged status
@@ -75,12 +79,13 @@ function updateEmailDisplay(){
             let iconClass = (flagged ? "ms-Icon ms-Icon--EndPointSolid flagged" : "ms-Icon ms-Icon--Flag unflagged");
             let toolTip = (flagged ? "Unflag" : "Flag");
             let subStyle = (flagged ? "subject blue-bold" : "subject")
+            let bgColor = (flagged ? "style='background-color:lightyellow'" : "")
             
 
-            let html = `<div class="row email" data-idx=${i}>`+
+            let html = `<div class="row email" data-idx=${i} ${bgColor}>`+
                             `<div class="padding">
                                 <div class="col-1 icon">`+
-                                    `<h1 class="initial">${initial}</h1>`+
+                                    `<h1 class="initial ms-bgColor-shared${color}">${initial}</h1>`+
                                 `</div>`+
                                 `<div class="col">`+
                                     `<div class="row">`+
@@ -108,13 +113,25 @@ function updateEmailDisplay(){
             emailHTML = emailHTML + html;
             //console.log("EMAIL: ", html);
             ++i;
-        }
+        } else { email.displayed = false; }
         //console.log("string of html: " + emailHTML);
 
         //append to innerHTML of id="emails"
-        document.getElementById("emails").innerHTML = emailHTML;
+        emailsDiv = document.getElementById("emails");
+        emailsDiv.innerHTML = emailHTML;
+        emailsDiv.className = "col expand";
 
-        //init toolbar
+        //init big buttons
+        let refreshButton = document.getElementById("refresh-button");
+        refreshButton.addEventListener('click', () => {
+            console.log("refreshing email display!");
+            getEmails();
+        });
+
+        let readButton = document.getElementById("mark-all");
+        readButton.addEventListener('click', markAllAsRead);
+
+        //init email toolbars
             //unread/read toggle
         let readToggles = document.getElementsByClassName("readToggle")
         for(readToggle of readToggles){
@@ -147,14 +164,14 @@ function updateEmailDisplay(){
 //changes unread badge and icon badge
 function setUnreadCount(count) {
     let el =  document.getElementById("numUnread");
-    if(count){
+    if(count > 0){
         el.innerHTML = count;
         el.parentElement.style.visibility = "visible";
     }
     else el.parentElement.style.visibility = "collapse";
 
     chrome.action.setBadgeBackgroundColor({ color: [208, 0, 24, 255] });
-    console.log("count: "+count);
+    console.log("display unread count: "+count);
     chrome.action.setBadgeText({
         text: count === 0 ? '' : count.toString()
     });
@@ -209,14 +226,14 @@ function toggleReadIcon(iconref, sendref, subjref){
         iconref.className = "ms-Icon ms-Icon--Mail read"
         iconref.title = "Mark as Unread";
         sendref.style.fontWeight = "normal";
-        subjref.style.fontWeight = "normal";
+        subjref.style.color = "black";
         setUnreadCount(--cache.unread);
     }
     else{
         iconref.className = "ms-Icon ms-Icon--Read unread"
         iconref.title = "Mark as Read";
         sendref.style.fontWeight = "600";
-        subjref.style.fontWeight = "600";
+        subjref.style.color = "#0078d4";
         setUnreadCount(++cache.unread);
     }
 
@@ -249,6 +266,26 @@ async function sendReadUpdate(idx){
     console.log("finished talking to update read");
     res = await res.json();
     console.log(res);
+}
+
+async function markAllAsRead(){
+    console.log("marking all as read");
+    let emails = document.getElementsByClassName("email");
+    //console.log("emails: ", emails);
+    for(emailDiv of emails){
+        let i = emailDiv.dataset.idx
+        let email = cache.allEmails[i];
+        if(email.displayed > 0 && !email.isRead){ //grab emails that havent been read, archived, or deleted
+            
+            let icon = emailDiv.getElementsByClassName("ms-Icon")[0];
+            let subj = emailDiv.getElementsByClassName("subject")[0];
+            let sender = emailDiv.getElementsByClassName("sender")[0];
+            console.log("icon: ", icon, subj, sender);
+
+            toggleReadIcon(icon, sender, subj);
+            sendReadUpdate(i);
+        }
+    }
 }
 
 function archiveMessage(e){
@@ -284,6 +321,7 @@ async function sendArchiveUpdate(idx){
 
     console.log("send message to archive", res.json());
     cache.allEmails[idx].parentFolderId = cache.archive;
+    cache.allEmails[idx].displayed = false;
     setUnreadCount(--cache.unread);
 }
 
@@ -318,6 +356,7 @@ async function sendDeleteUpdate(idx){
 
     console.log("send deleded message successful");
     cache.allEmails[idx].parentFolderId = cache.archive;
+    cache.allEmails[idx].displayed = false;
     setUnreadCount(--cache.unread);
 }
 
@@ -325,19 +364,19 @@ async function sendDeleteUpdate(idx){
 function toggleFlag(e){
     var icon = e.target.firstChild;
     var idx = e.path[5].dataset.idx;
-    var sender = e.path[2].firstChild.firstChild;
+    var emailDiv = e.path[5];
     var subj = e.path[2].firstChild.lastChild;
     //console.log("subj: ", subj);
 
 
     //console.log("flag clicked!", e, icon,idx,email);
 
-    toggleFlagIcon(icon, subj);
+    toggleFlagIcon(icon, subj, emailDiv);
     sendFlagUpdate(idx);
     
 }
 
-function toggleFlagIcon(iconref, subjref){
+function toggleFlagIcon(iconref, subjref, emailref){
     console.log("toggle flag state", iconref);
     var classType = iconref.className;
     if(classType.search("unflagged") != -1){ //unflagged, change to flagged
@@ -345,6 +384,7 @@ function toggleFlagIcon(iconref, subjref){
         iconref.className = "ms-Icon ms-Icon--EndPointSolid flagged";
         iconref.title = "Unflag";
         subjref.className = "subject blue-bold";
+        emailref.style.backgroundColor = "lightyellow"
         
     }
     else{ 
@@ -353,6 +393,7 @@ function toggleFlagIcon(iconref, subjref){
         iconref.className = "ms-Icon ms-Icon--Flag unflagged";
         iconref.title = "Flag";
         subjref.className = "subject";
+        emailref.style.backgroundColor = "white"
         
     }
 
@@ -387,4 +428,31 @@ async function sendFlagUpdate(idx){
     console.log("finished talking to update flag");
     res = await res.json();
     console.log(res);
+}
+
+const colors = [
+    "pinkRed10",
+    "red20",
+    "red10",
+    "orange20",
+    "orangeYellow20",
+    "green10",
+    "green20",
+    "cyan20",
+    "cyan30",
+    "cyanBlue20",
+    "blue10",
+    "blueMagenta30",
+    "blueMagenta20",
+    "magenta20",
+    "magenta10",
+    "magentaPink20",
+    "orange30",
+    "gray30",
+    "gray20"
+]
+//set random color of icons
+function getRandomColor(){
+    let len = colors.length;
+    return(colors[Math.floor(Math.random() * len)]);
 }

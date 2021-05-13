@@ -1,4 +1,5 @@
 /*import MS fabric https://uifabricicons.azurewebsites.net/ */
+@import 'fabric.min.css';
 @import 'icons/ms-fabric/css/fabric-icons.css';
 
 
@@ -11,7 +12,12 @@
 }
 
 h1 {
-    font-weight: 600;
+    /*font-weight: 600; this is important for the circles*/
+    color: white;
+    font-size: 28px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-weight:normal;
 }
 
 .title, .idBar {
@@ -32,15 +38,25 @@ h1 {
 }
 
 .idBar {
-    background-color: lightgrey;
     font-size: 16px;
     height: 38px;
 
 }
 
+.toolbar-buttons {
+    margin-left: 5px;
+}
+
+.icon-button.toolbar:hover{
+    background-color:rgb(102, 97, 97, .38);
+}
+
+.toolbar-icon{
+    margin:0;
+}
+
 body{
     margin:0px;
-    margin-top:8px;
 }
 
 #user{
@@ -61,6 +77,19 @@ body{
     width:100%;
     max-width:none;
     margin:0;
+    padding:0;
+}
+
+#emails{
+    max-height: 0px;
+    overflow:hidden;
+    transition-property: max-height;
+    transition-duration: .5s;
+    transition-timing-function: ease-out;
+}
+
+.expand{
+    max-height: 650px !important;
 }
 
 .email {
@@ -91,8 +120,8 @@ body{
 
 .email:hover .mail-icons {
     visibility:visible;
-    width:auto;
-    transition-property: width;
+    max-width:150px;
+    opacity: 1;
 }
 
 
@@ -115,10 +144,11 @@ body{
 .subject{
     line-height: .8;
     padding-bottom: 6px;
+    color: #0078d4;
 }
 
 .blue-bold{
-    color: #0d6efd;
+    color: #0078d4;
     font-weight: 600px;
 }
 
@@ -132,17 +162,17 @@ body{
 .initial{
     display:inline-block;
     font-size:1.5em;
-    min-width:2em;
-    min-height:2em;
+    min-width:2.2em;
+    min-height:2.2em;
     line-height:2em;
     text-align:center;
     border-radius:50%;
-    background:#0d6efd;
+    /*background:#0d6efd;*/
     vertical-align:middle;
     margin-right:1em;
     color:white;
     font-weight: normal;
-
+    padding:0;
 }
 
 .sender-box{
@@ -163,9 +193,14 @@ body{
 .mail-icons{
     display:flex;
     overflow:hidden;
-    visibility:collapse;
-    width:0;
-    transition-property: width;
+    /*visibility:collapse;*/
+    max-width:0;
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: ease;
+    transition-duration: 1s;
+    padding: 0;
+    justify-content: flex-end;
 }
 
 .mail-icons *{
@@ -187,3 +222,6 @@ i {
 .icon-button:hover{
     background-color:rgba(211, 211, 211, 0.39);
 }
+
+
+
