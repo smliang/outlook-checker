@@ -5,27 +5,28 @@
     <link rel="stylesheet" href="popup.css">
 </head>
 
-<body class="ms-Fabric" style="width: 600px">
-    <div class="title ms-bgColor-themePrimary">
-        <!--img src="icons/icon.png" class="go-to-inbox" style="width: 30px; padding-right: 5px"-->
-        <h1 class="go-to-inbox">Outlook Checker</h1>
-    </div>
-    <div class="idBar ms-bgColor-neutralLight">
-        <p id="user" class="go-to-inbox">PlaceHolder</p>
-        <p id="email" class="go-to-inbox" style="margin-left:5px; margin-right:auto">second@placeholder.net</p>
-        <span class="badge rounded-pill go-to-inbox ms-bgColor-themeSecondary" style="visibility:collapse"><span
-            id="numUnread"></span> Unread</span>
-        <div id="toolbar-buttons">
-            <button class="btn icon-button toolbar hover-dark" id="mark-all" title="Mark All As Read"><i
-                    class="ms-Icon ms-Icon--Read toolbar-icon"></i></button>
-            <button class="btn icon-button toolbar hover-dark" id="refresh-button" title="Refresh"><i
-                    class="ms-Icon ms-Icon--Refresh toolbar-icon"></i></button>
+<body class="ms-Fabric">
+    <div class="sticky-header">
+        <div class="title ms-bgColor-themePrimary">
+            <!--img src="icons/icon.png" class="go-to-inbox" style="width: 30px; padding-right: 5px"-->
+            <h1 class="go-to-inbox">Outlook Checker</h1>
         </div>
-
+        <div class="idBar ms-bgColor-neutralLight">
+            <p id="user" class="go-to-inbox">PlaceHolder</p>
+            <p id="email" class="go-to-inbox" style="margin-left:5px; margin-right:auto">second@placeholder.net</p>
+            <span class="badge rounded-pill go-to-inbox ms-bgColor-themeSecondary" style="visibility:collapse"><span
+                id="numUnread"></span> Unread</span>
+            <div id="toolbar-buttons">
+                <button class="btn icon-button toolbar hover-dark" id="mark-all" title="Mark All As Read"><i
+                        class="ms-Icon ms-Icon--Read toolbar-icon"></i></button>
+                <button class="btn icon-button toolbar hover-dark" id="refresh-button" title="Refresh"><i
+                        class="ms-Icon ms-Icon--Refresh toolbar-icon"></i></button>
+            </div>
+        </div>
     </div>
-
+    <div class="spacer"></div>
     <div class="container">
-        <div class="row">
+        <div class="row" style="margin:0">
             <div id="emails" class="col">
 
                 <!--div class="row email" data-idx="0"> <--THIS STUFF IS HANDLED BY popup.js updateEmailDisplay()->
@@ -66,15 +67,15 @@
                             <div class="col p-0" style="overflow:hidden;" >
                                 <p id="subject-expanded"></p> 
                             </div>
-                            <div class="col-4 mail-icons-expanded idx-here">
-                                <button class="btn icon-button readToggle hover-dark" title="Mark as Read"><i
-                                        class="ms-Icon ms-Icon--Read unread "></i></button>
-                                <button class="btn icon-button archive hover-dark" title="Archive"><i
+                            <div class="col-4 mail-icons-expanded idx-here" data-idx="">
+                                <button id="unread-extended" class="btn icon-button hover-dark" title="Mark as Unread"><i
+                                        class="ms-Icon ms-Icon--Mail read "></i></button>
+                                <button id="archive-extended" class="btn icon-button hover-dark" title="Archive"><i
                                         class="ms-Icon ms-Icon--Archive"></i></button>
-                                <button class="btn icon-button delete hover-dark" title="Delete"><i
+                                <button id="delete-extended"class="btn icon-button hover-dark" title="Delete"><i
                                         class="ms-Icon ms-Icon--Delete"></i></button>
-                                <button class="btn icon-button flag hover-dark" title="Flag"><i
-                                        class="ms-Icon ms-Icon--Flag unflagged "></i></button>
+                                <button id="flag-extended" class="btn icon-button hover-dark" title="Flag"><i
+                                        class="ms-Icon ms-Icon--Flag" data-flagged="false"></i></button>
                             </div>
                         </div>
                         <div class="row email-expanded-container">
@@ -103,9 +104,9 @@
                             </div>
                             <div class="row" style="margin:auto">
                                 <div class="col-12 p-1" >
-                                    <div id="body-expanded">
+                                    <iframe id="body-expanded" srcdoc="">
                                         
-                                    </div>
+                                    </iframe>
                                 </div>
                                 
                             </div>

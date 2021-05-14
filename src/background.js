@@ -188,7 +188,14 @@ async function getInfo(){
 }
 
 async function onAlarm(alarm) {
-    await update();
+    try{
+        await update();
+    }
+    catch(e){
+        console.log("ERROR: ", e);
+    }
+    
+
 }
 
 async function update() {
