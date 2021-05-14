@@ -144,7 +144,6 @@ function isOutlookUrl(url) {
 async function login() {
     const state = (Date.now() * Math.random()).toString();
     const redirectUrl = chrome.identity.getRedirectURL();
-    console.log(redirectUrl);
     const codeVerifier = createRandomString();
     const hash = await sha256(codeVerifier);
     const codeChallenge = bufferToBase64UrlEncoded(hash);

@@ -3,6 +3,12 @@ const outlookUrl = 'https://outlook.office.com/mail';
 const outlookHost = 'outlook.office.com';
 
 document.addEventListener('DOMContentLoaded', changeName());
+//init big buttons
+let refreshButton = document.getElementById("refresh-button");
+refreshButton.addEventListener('click', onRefresh);
+
+let readButton = document.getElementById("mark-all");
+readButton.addEventListener('click', markAllAsRead);
 //todo add an event handler to update popup in case its open when we need a token refresh
 
 
@@ -83,8 +89,9 @@ function updateEmailDisplay(){
             
 
             let html = `<div class="row email" data-idx=${i} ${bgColor}>`+
-                            `<div class="padding">
-                                <div class="col-1 icon">`+
+                            `<div class="col unread-bar"></div>` +
+                            `<div class="col padding">`+
+                                `<div class="col-1 icon">`+
                                     `<h1 class="initial ms-bgColor-shared${color}">${initial}</h1>`+
                                 `</div>`+
                                 `<div class="col">`+
@@ -117,19 +124,9 @@ function updateEmailDisplay(){
         //console.log("string of html: " + emailHTML);
 
         //append to innerHTML of id="emails"
-        emailsDiv = document.getElementById("emails");
+        let emailsDiv = document.getElementById("emails");
         emailsDiv.innerHTML = emailHTML;
-        emailsDiv.className = "col expand";
-
-        //init big buttons
-        let refreshButton = document.getElementById("refresh-button");
-        refreshButton.addEventListener('click', () => {
-            console.log("refreshing email display!");
-            getEmails();
-        });
-
-        let readButton = document.getElementById("mark-all");
-        readButton.addEventListener('click', markAllAsRead);
+        setTimeout( () =>{ emailsDiv.className = "col expand"}, 100) ;
 
         //init email toolbars
             //unread/read toggle
@@ -153,12 +150,20 @@ function updateEmailDisplay(){
             button.addEventListener('click', toggleFlag);
         }
 
+        //email click
+        emailsDiv.addEventListener('click', expandEmailView);
+
         //update counts because we only get 25 emails, so this will be more accurate unless there's more than 25 unread
         if(cache.unread < 25 ){
             setUnreadCount(cache.allEmails.length);
             cache.unread = cache.allEmails.length;
         }
     }
+}
+
+function onRefresh(e){
+    console.log("refreshing email display!",e);
+    getEmails();
 }
 
 //changes unread badge and icon badge
@@ -175,6 +180,27 @@ function setUnreadCount(count) {
     chrome.action.setBadgeText({
         text: count === 0 ? '' : count.toString()
     });
+}
+
+function expandEmailView(e){    
+    if(e.target.className.search("icon-button") == -1){
+        console.log("expanding email!", e);
+        openEmailPreview(e.target.dataset.idx);
+    }
+}
+
+async function openEmailPreview(idx){
+    //init template
+    initExpandedTemplate(idx);
+    console.log("animating")
+
+    //so i'd really like for this to swipe over, but i simply cannot get the animations how i want them
+    //so we're just gonna snap and maybe I'll come back to it later... see expand-view for the animations i 
+    //commented out
+    let emailDiv = document.getElementById("emails");
+    emailDiv.className = "col expand expand-view";
+    document.getElementById("toolbar-buttons").style.display = "none";
+
 }
 
 async function openOutlookInbox() {
@@ -208,17 +234,18 @@ function toggleRead(e){
     var email = cache.allEmails[idx];
     var sender = e.path[2].firstChild.firstChild;
     var subj = e.path[2].firstChild.lastChild;
+    var bar = e.path[5].firstChild;
     //console.log("subj: ", subj);
 
 
     console.log("unread clicked!", e, icon,idx,email);
 
-    toggleReadIcon(icon, sender, subj);
+    toggleReadIcon(icon, sender, subj, bar);
     sendReadUpdate(idx);
     
 }
 
-function toggleReadIcon(iconref, sendref, subjref){
+function toggleReadIcon(iconref, sendref, subjref, barref){
     //check if in unread or read state
     var classType = iconref.className;
     if(classType.search("unread") != -1){
@@ -227,6 +254,7 @@ function toggleReadIcon(iconref, sendref, subjref){
         iconref.title = "Mark as Unread";
         sendref.style.fontWeight = "normal";
         subjref.style.color = "black";
+        barref.className = "unread-bar read"
         setUnreadCount(--cache.unread);
     }
     else{
@@ -234,6 +262,7 @@ function toggleReadIcon(iconref, sendref, subjref){
         iconref.title = "Mark as Read";
         sendref.style.fontWeight = "600";
         subjref.style.color = "#0078d4";
+        barref.className = "unread-bar"
         setUnreadCount(++cache.unread);
     }
 
@@ -280,9 +309,10 @@ async function markAllAsRead(){
             let icon = emailDiv.getElementsByClassName("ms-Icon")[0];
             let subj = emailDiv.getElementsByClassName("subject")[0];
             let sender = emailDiv.getElementsByClassName("sender")[0];
+            let bar = emailDiv.firstChild;
             console.log("icon: ", icon, subj, sender);
 
-            toggleReadIcon(icon, sender, subj);
+            toggleReadIcon(icon, sender, subj, bar);
             sendReadUpdate(i);
         }
     }
@@ -455,4 +485,66 @@ const colors = [
 function getRandomColor(){
     let len = colors.length;
     return(colors[Math.floor(Math.random() * len)]);
+}
+
+async function initExpandedTemplate(idx){
+        let email = cache.allEmails[idx];
+        //console.log(template);
+
+        //flag status
+        if(email.flag.flagStatus == "flagged"){
+            document.getElementById("sender-box-expanded").style.backgroundColor="lightyellow";
+            //TODO: set flag icon
+        }
+
+        // subject 
+        document.getElementById("subject-expanded").innerHTML = email.subject;
+        // set up icon
+        let icon = document.getElementById('expanded-initial');
+        icon.class = `initial ms-bgColor-shared${email.color}`;
+        icon.innerHTML = email.from.emailAddress.name.match("[a-zA-Z]");
+
+        //from
+        document.getElementById("sender-expanded").innerHTML = `${email.from.emailAddress.name} &lt${email.from.emailAddress.address}&gt`
+
+        //time
+        document.getElementById("time-expanded").innerHTML = getParsedTime(email.sentDateTime);
+
+        //to
+        let to =  document.getElementById("to-expanded");
+        let recipients = `<span style="font-weight:600">To:</span>`;
+        for(recipient of email.toRecipients){ 
+            let email = recipient.emailAddress.address;
+            let name = recipient.emailAddress.name;
+            let line = ` ${name} <span class="font-italic">&lt${email}&gt</span>,`;
+            recipients = recipients + line;
+            console.log("line: ", line);
+        }
+        
+        recipients = recipients.substring(0, recipients.length-1);
+        console.log("recipients:", recipients);
+        to.innerHTML = recipients;
+
+        document.getElementById("body-expanded").innerHTML = `${email.body.content}`;
+        console.log("finished template init");
+        
+    
+    
+}
+
+const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+function getParsedTime(dateObj){
+    let sendDateTime = new Date(dateObj); // "2021-05-11T18:24:08Z"
+    let day = days[sendDateTime.getDay()];
+    
+    let month = sendDateTime.getMonth() + 1;
+    let date = sendDateTime.getDate();
+    let year = sendDateTime.getFullYear();
+
+    let minute = sendDateTime.getMinutes().toString();
+    let hour = sendDateTime.getHours()%12;
+    let time = (hour == 0 ? 1 : hour) + ":" + (minute < 10 ? "0"+ minute : minute);
+    time = time + (sendDateTime.getHours() > 12 ? "pm" : "am");
+
+    return `${day} ${month}/${date}/${year} ${time}`;
 }

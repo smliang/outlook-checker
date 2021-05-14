@@ -43,12 +43,8 @@ h1 {
 
 }
 
-.toolbar-buttons {
+#toolbar-buttons {
     margin-left: 5px;
-}
-
-.icon-button.toolbar:hover{
-    background-color:rgb(102, 97, 97, .38);
 }
 
 .toolbar-icon{
@@ -83,13 +79,33 @@ body{
 #emails{
     max-height: 0px;
     overflow:hidden;
-    transition-property: max-height;
-    transition-duration: .5s;
+    transition-property: all;
+    transition-duration: .25s;
     transition-timing-function: ease-out;
+    opacity: 1;
 }
 
 .expand{
     max-height: 650px !important;
+}
+
+.expand-view{
+    /*for maybe when i can figure out the ani
+    max-width: 0px;
+    opacity:0 !important;*/
+    display:none !important;
+}
+
+#email-expand-view{
+    /*background-color:blue; */
+    visibility:hidden;
+    display:none;
+}
+
+/*for the email-expand view div*/
+.expand-view + .col{
+    visibility: visible !important;
+    display: inherit !important;
 }
 
 .email {
@@ -100,14 +116,29 @@ body{
     border-bottom:1px solid rgba(211, 211, 211, 0.39);
     overflow: hidden;
     height: auto;
-    max-height: 650px;
+    max-height: 140px;
     transition-property: max-height;
     transition-duration: .5s;
     justify-content: center;
+    cursor: pointer;
+
+}
+
+.unread-bar{
+    max-width:5px;
+    background-color: #0078d4;
+    padding:10px;
+    opacity: 1;
+    transition-property:opacity;
+    transition-duration: .5s;
+}
+
+.unread-bar.read{
+    opacity: 0;
 }
 
 .padding{
-    margin: 10px;
+    margin-right: 10px;
     margin-top: 12px;
     margin-bottom: 12px;
     display: flex;
@@ -125,7 +156,11 @@ body{
 }
 
 
-.email p {
+.email * {
+    pointer-events: none;
+}
+
+.email p, .email-expanded-container {
     margin-bottom:0;
     font-size:14px;
     
@@ -217,11 +252,86 @@ i {
     border-radius: 0;
     min-width:32px;
     min-height:32px;
+    pointer-events: auto;
 }
 
 .icon-button:hover{
-    background-color:rgba(211, 211, 211, 0.39);
+    background-color:rgb(243, 242, 241);
 }
 
 
+.mail-icons-expanded {
+    visibility:visible;
+    opacity: 1;
+    display:flex;
+    justify-content:flex-end;
+    max-height:32px;
+    max-width:115px;
+}
 
+.subject-header{
+    height: 45px;
+    align-content: center;
+    padding-left:8px;
+    padding-right:8px;
+}
+
+#subject-expanded{
+    font-weight:600;
+    width:390px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    font-size:18px;
+    padding:0;
+    margin:0;
+    align-self: center;    
+}
+
+.hover-dark:hover{
+    background-color:#e1dfdd !important;
+}
+
+.sender-box *{
+    margin:0;
+}
+
+#sender-expanded{
+    width:400px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+}
+
+.sender-expanded-unread{
+    font-size:16px;
+    color: #0078d4;
+    font-weight:600;
+}
+
+.sender-expanded-read{
+    font-size:16px;
+    color: black;
+    font-weight:600;
+}
+
+#to{
+    font-size:12px;
+}
+
+.padding-expanded{
+    margin-right: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    display: flex;
+    width:97%;
+}
+
+#body-expanded{
+    padding: 5px;
+    border:2px solid rgba(211, 211, 211, 0.39);
+}
+
+.unread-bar.expanded{
+    padding:3px;
+}
