@@ -184,6 +184,7 @@ body {
     
 }
 
+
 .body{
     font-size:14px;
     line-height: normal;
@@ -293,8 +294,18 @@ i {
     opacity: 1;
     display:flex;
     justify-content:flex-end;
-    max-height:32px;
-    max-width:120px;
+    max-height:40px;
+    max-width:152px;
+}
+
+#reply-expanded {
+    display:flex;
+    align-items:center;
+}
+
+
+.reply i {
+    margin:5px;
 }
 
 .subject-header{
@@ -371,6 +382,11 @@ i {
 .flagged-mail{
     background-color: lightyellow;
 }
+
+.email-expanded-container{
+    background-color: #faf9f8;
+}
+
 .flagged-mail .flag i, .flagged-mail #flag-extended i {
     color: #a4262c;
 }

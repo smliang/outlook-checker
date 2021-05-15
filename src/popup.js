@@ -9,6 +9,8 @@ refreshButton.addEventListener('click', onRefresh);
 
 let readButton = document.getElementById("mark-all");
 readButton.addEventListener('click', markAllAsRead);
+
+document.getElementById("archive-all").addEventListener('click', archiveAll);
 initTempButtons();
 
 function initTempButtons() {
@@ -73,9 +75,13 @@ function initTempButtons() {
         sendFlagUpdate(idx);
     });
 
+    /*todo: get popout windows to do this, but window.close() won't call
     document.getElementById("reply-expanded").addEventListener('click', replyMessage);
     document.getElementById("reply-all-expanded").addEventListener('click', replyAllMessage);
-    document.getElementById("forward-expanded").addEventListener('click', forwardMessage);
+    document.getElementById("forward-expanded").addEventListener('click', forwardMessage);*/
+
+    document.getElementById("openpopup-expanded").addEventListener('click',openPopup);
+
 }
 
 //returns HTML ref to email that matches idx
@@ -208,43 +214,46 @@ function updateEmailDisplay() {
             ++i;
         } else { email.displayed = false; }
         //console.log("string of html: " + emailHTML);
-
-        //append to innerHTML of id="emails"
-        let emailsDiv = document.getElementById("emails");
-        emailsDiv.innerHTML = emailHTML;
-        setTimeout(() => { emailsDiv.className = "col expand" }, 100);
-
-        //init email toolbars
-        //unread/read toggle
-        let readToggles = document.getElementsByClassName("readToggle")
-        for (readToggle of readToggles) {
-            readToggle.addEventListener('click', toggleRead);
-        }
-        //archive button
-        let archiveButtons = document.getElementsByClassName("archive");
-        for (button of archiveButtons) {
-            button.addEventListener('click', archiveMessage);
-        }
-        //delete button
-        let deleteButtons = document.getElementsByClassName("delete");
-        for (button of deleteButtons) {
-            button.addEventListener('click', deleteMessage);
-        }
-        //flag/unflag toggle
-        let flagButtons = document.getElementsByClassName("flag");
-        for (button of flagButtons) {
-            button.addEventListener('click', toggleFlag);
-        }
-
-        //email click
-        emailsDiv.addEventListener('click', expandEmailView);
-
-        //update counts because we only get 25 emails, so this will be more accurate unless there's more than 25 unread
-        if (cache.unread < 25) {
-            setUnreadCount(cache.allEmails.length);
-            cache.unread = cache.allEmails.length;
-        }
     }
+
+    //append to innerHTML of id="emails"
+    let emailsDiv = document.getElementById("emails");
+    emailsDiv.innerHTML = emailHTML;
+    setTimeout(() => { emailsDiv.className = "col expand" }, 100);
+
+    //init email toolbars
+    //unread/read toggle
+    let readToggles = document.getElementsByClassName("readToggle")
+    for (readToggle of readToggles) {
+        readToggle.addEventListener('click', toggleRead);
+    }
+    //archive button
+    let archiveButtons = document.getElementsByClassName("archive");
+    for (button of archiveButtons) {
+        button.addEventListener('click', archiveMessage);
+    }
+    //delete button
+    let deleteButtons = document.getElementsByClassName("delete");
+    for (button of deleteButtons) {
+        button.addEventListener('click', deleteMessage);
+    }
+    //flag/unflag toggle
+    let flagButtons = document.getElementsByClassName("flag");
+    for (button of flagButtons) {
+        button.addEventListener('click', toggleFlag);
+    }
+
+    //email click
+    emailsDiv.addEventListener('click', expandEmailView);
+
+    //update counts because we only get 25 emails, so this will be more accurate unless there's more than 25 unread
+    console.log("cache says we have " + cache.unread +" unreads, we have " + cache.allEmails.length + " emails");
+    if (cache.unread < 25) {
+        setUnreadCount(cache.allEmails.length);
+        cache.unread = cache.allEmails.length;
+    }
+
+    
 }
 
 function onRefresh(e) {
@@ -404,6 +413,7 @@ async function sendReadUpdate(idx) {
     console.log(res);
 }
 
+
 async function markAllAsRead() {
     console.log("marking all as read");
     let emails = document.getElementsByClassName("email");
@@ -417,10 +427,10 @@ async function markAllAsRead() {
             let subj = emailDiv.getElementsByClassName("subject")[0];
             let sender = emailDiv.getElementsByClassName("sender")[0];
             let bar = emailDiv.firstChild;
-            console.log("icon: ", icon, subj, sender);
+            //console.log("icon: ", icon, subj, sender);
 
             toggleReadIcon(icon, sender, subj, bar);
-            sendReadUpdate(i);
+            await sendReadUpdate(i);
         }
     }
 }
@@ -459,9 +469,16 @@ async function sendArchiveUpdate(idx) {
     console.log("send message to archive", res.json());
     cache.allEmails[idx].parentFolderId = cache.archive;
     cache.allEmails[idx].displayed = false;
-    if(!cache.allEmails[idx].isRead);
+    if(!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
 }
 
+async function archiveAll(){
+    emails = document.getElementsByClassName('email');
+    for(email of emails){
+        email.style.maxHeight = 0;
+        await sendArchiveUpdate(email.dataset.idx);
+    }
+}
 
 function deleteMessage(e) {
     console.log("delete clicked");
@@ -594,9 +611,7 @@ async function sendFlagUpdate(idx) {
     console.log(res);
 }
 
-const composelink = "https://outlook.office365.com/mail/deeplink/compose/";
-
-async function replyMessage(e){
+async function openPopup(e){
     let idx = e.target.parentElement.dataset.idx;
     let id = cache.allEmails[idx].id;
     chrome.windows.create(
@@ -608,7 +623,14 @@ async function replyMessage(e){
             height: 600,
         }
     );
-/*
+}
+
+/*until i get the window.close() function to work, I'm just going to open a popup 
+const composelink = "https://outlook.office365.com/mail/deeplink/compose/";
+async function replyMessage(e){
+    let idx = e.target.parentElement.dataset.idx;
+    let id = cache.allEmails[idx].id;
+   
     let res = await fetch('https://graph.microsoft.com/v1.0/me/messages/' + id + '/createReply', {
         method: 'POST',
         headers: new Headers({
@@ -637,7 +659,7 @@ async function replyMessage(e){
                 height: 600,
             }
         );
-    });*/
+    });
    
 }
 
@@ -712,6 +734,7 @@ async function forwardMessage(e){
     });
    
 }
+*/
 
 const colors = [
     "pinkRed10",

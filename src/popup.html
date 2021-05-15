@@ -15,10 +15,12 @@
             <p id="user" class="go-to-inbox">PlaceHolder</p>
             <p id="email" class="go-to-inbox" style="margin-left:5px; margin-right:auto">second@placeholder.net</p>
             <span class="badge rounded-pill go-to-inbox ms-bgColor-themeSecondary" style="visibility:collapse"><span
-                id="numUnread"></span> Unread</span>
+                    id="numUnread"></span> Unread</span>
             <div id="toolbar-buttons">
                 <button class="btn icon-button toolbar hover-dark" id="mark-all" title="Mark All As Read"><i
                         class="ms-Icon ms-Icon--Read toolbar-icon"></i></button>
+                    <button class="btn icon-button toolbar hover-dark" id="archive-all" title="Archive All"><i
+                        class="ms-Icon ms-Icon--Archive toolbar-icon"></i></button>
                 <button class="btn icon-button toolbar hover-dark" id="refresh-button" title="Refresh"><i
                         class="ms-Icon ms-Icon--Refresh toolbar-icon"></i></button>
             </div>
@@ -62,17 +64,17 @@
                         <div class="row subject-header ms-bgColor-neutralLighter">
                             <div class="col-1 p-0">
                                 <button id="back-icon" class="btn icon-button hover-dark " title="Back to Unread"><i
-                                    class="ms-Icon ms-Icon--Back"></i></button>
+                                        class="ms-Icon ms-Icon--Back"></i></button>
                             </div>
-                            <div class="col p-0" style="overflow:hidden;" >
-                                <p id="subject-expanded"></p> 
+                            <div class="col p-0" style="overflow:hidden;">
+                                <p id="subject-expanded"></p>
                             </div>
                             <div class="col mail-icons-expanded idx-here" data-idx="">
-                                <button id="unread-extended" class="btn icon-button hover-dark" title="Mark as Unread"><i
-                                        class="ms-Icon ms-Icon--Mail read "></i></button>
+                                <button id="unread-extended" class="btn icon-button hover-dark"
+                                    title="Mark as Unread"><i class="ms-Icon ms-Icon--Mail read "></i></button>
                                 <button id="archive-extended" class="btn icon-button hover-dark" title="Archive"><i
                                         class="ms-Icon ms-Icon--Archive"></i></button>
-                                <button id="delete-extended"class="btn icon-button hover-dark" title="Delete"><i
+                                <button id="delete-extended" class="btn icon-button hover-dark" title="Delete"><i
                                         class="ms-Icon ms-Icon--Delete"></i></button>
                                 <button id="flag-extended" class="btn icon-button hover-dark" title="Flag"><i
                                         class="ms-Icon ms-Icon--Flag" data-flagged="false"></i></button>
@@ -86,34 +88,35 @@
                                 </div>
                                 <div class="col">
                                     <div class="row">
-                                        <div  class="col sender-box">
+                                        <div class="col sender-box">
                                             <p id="sender-expanded" class="sender-expanded-unread"></p>
                                             <p id="time-expanded"></p>
                                             <p id="to-expanded"></p>
                                         </div>
                                         <div class="col reply-icons-expanded idx-here" data-idx="">
-                                            <button id="reply-expanded" class="btn icon-button reply" title="Reply"><i
-                                                    class="ms-Icon ms-Icon--Reply "></i></button>
-                                            <button id="reply-all-expanded" class="btn icon-button reply-all" title="Reply All"><i
-                                                    class="ms-Icon ms-Icon--ReplyAll"></i></button>
-                                            <button id="forward-expanded" class="btn icon-button forward" title="Forward"><i
-                                                    class="ms-Icon ms-Icon--Forward"></i></button>
+                                            <button id="openpopup-expanded" class="btn icon-button reply"
+                                                title="View, Reply, and Forward in Popup Window">
+                                                <i class="ms-Icon ms-Icon--OpenInNewWindow "></i>
+                                                <i class="ms-Icon ms-Icon--Reply "></i>
+                                                <i class="ms-Icon ms-Icon--ReplyAll"></i>
+                                                <i class="ms-Icon ms-Icon--Forward"></i></button>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="row" style="margin:auto">
-                                <div class="col-12 p-1" >
+                                <div class="col-12 p-1">
                                     <iframe id="body-expanded" srcdoc="">
-                                        
+
                                     </iframe>
                                 </div>
-                                
+
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </div>
