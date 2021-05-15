@@ -72,6 +72,10 @@ function initTempButtons() {
         toggleFlagIcon(listicon, listsubj, emaillistref);
         sendFlagUpdate(idx);
     });
+
+    document.getElementById("reply-expanded").addEventListener('click', replyMessage);
+    document.getElementById("reply-all-expanded").addEventListener('click', replyAllMessage);
+    document.getElementById("forward-expanded").addEventListener('click', forwardMessage);
 }
 
 //returns HTML ref to email that matches idx
@@ -111,7 +115,11 @@ function changeName() {
         let links = document.getElementsByClassName("go-to-inbox");
         console.log("links!: ", links);
         for (link of links) {
-            link.addEventListener('click', openOutlookInbox);
+            link.addEventListener('click', (e) => {
+                if (e.target.className.search("icon-button") == -1) {
+                    openOutlookInbox();
+                }
+            });
         }
 
         getEmails();
@@ -584,6 +592,125 @@ async function sendFlagUpdate(idx) {
     console.log("finished talking to update flag");
     res = await res.json();
     console.log(res);
+}
+
+const composelink = "https://outlook.office365.com/mail/deeplink/compose/";
+
+async function replyMessage(e){
+    let idx = e.target.parentElement.dataset.idx;
+    let id = cache.allEmails[idx].id;
+    chrome.windows.create(
+        {
+            focused:true,
+            type:"popup",
+            url: cache.allEmails[idx].webLink,
+            width: 600,
+            height: 600,
+        }
+    );
+/*
+    let res = await fetch('https://graph.microsoft.com/v1.0/me/messages/' + id + '/createReply', {
+        method: 'POST',
+        headers: new Headers({
+
+            'Authorization': 'Bearer ' + cache.token,
+            'Content-Type': 'application/json'
+        })
+    });
+
+    if (!res.ok) {
+        await console.log(res.json());
+        throw new Error('HTTP error: status = ' + res.status);
+    }
+
+    res.json().then((data) => {
+        console.log(data);
+        replyid = encodeURIComponent(data.id);
+        link = composelink + replyid + "?ItemID=" + replyid + "&exvsurl=1";
+        console.log(link);
+        chrome.windows.create(
+            {
+                focused:true,
+                type:"popup",
+                url: link,
+                width: 600,
+                height: 600,
+            }
+        );
+    });*/
+   
+}
+
+async function replyAllMessage(e){
+    let idx = e.target.parentElement.dataset.idx;
+    let id = cache.allEmails[idx].id;
+
+    let res = await fetch('https://graph.microsoft.com/v1.0/me/messages/' + id + '/createReplyAll', {
+        method: 'POST',
+        headers: new Headers({
+
+            'Authorization': 'Bearer ' + cache.token,
+            'Content-Type': 'application/json'
+        })
+    });
+
+    if (!res.ok) {
+        await console.log(res.json());
+        throw new Error('HTTP error: status = ' + res.status);
+    }
+
+    res.json().then((data) => {
+        console.log(data);
+        replyid = encodeURIComponent(data.id);
+        link = composelink + replyid + "?ItemID=" + replyid + "&exvsurl=1";
+        console.log(link);
+        chrome.windows.create(
+            {
+                focused:true,
+                type:"popup",
+                url: link,
+                width: 600,
+                height: 600,
+            }
+        );
+    });
+   
+}
+
+async function forwardMessage(e){
+    let idx = e.target.parentElement.dataset.idx;
+    let id = cache.allEmails[idx].id;
+
+    let res = await fetch('https://graph.microsoft.com/v1.0/me/messages/' + id + '/createForward', {
+        method: 'POST',
+        headers: new Headers({
+
+            'Authorization': 'Bearer ' + cache.token,
+            'Content-Type': 'application/json'
+        })
+    });
+
+    if (!res.ok) {
+        await console.log(res.json());
+        throw new Error('HTTP error: status = ' + res.status);
+    }
+
+    res.json().then((data) => {
+        console.log(data);
+        replyid = encodeURIComponent(data.id);
+        link = composelink + replyid + "?ItemID=" + replyid + "&exvsurl=1";
+        console.log(link);
+        chrome.windows.create(
+            {
+                focused:true,
+                type:"popup",
+                url: link,
+                width: 600,
+                height: 600,
+            }
+        );
+    });
+   
 }
 
 const colors = [

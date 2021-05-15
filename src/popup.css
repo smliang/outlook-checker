@@ -284,7 +284,17 @@ i {
     display:flex;
     justify-content:flex-end;
     max-height:32px;
-    max-width:115px;
+    min-width:115px;
+}
+
+
+.reply-icons-expanded {
+    visibility:visible;
+    opacity: 1;
+    display:flex;
+    justify-content:flex-end;
+    max-height:32px;
+    max-width:120px;
 }
 
 .subject-header{
