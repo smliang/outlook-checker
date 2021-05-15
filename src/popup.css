@@ -30,8 +30,22 @@ h1 {
     font-size: 28px;
     padding-top: 5px;
     padding-bottom: 5px;
-    font-weight:normal;
+    font-weight:600;
 }
+
+.title i {
+    color:#004578;
+}
+
+.title button {
+    margin-left:auto;
+    min-width:45px;
+}
+
+.title button:hover{
+    background-color:#2b88d8;
+}
+
 
 .title, .idBar {
     
@@ -90,6 +104,13 @@ body {
     max-width:none;
     margin:0;
     padding:0;
+}
+
+#no-emails{
+    text-align: center;
+    margin-top: 16px;
+    font-size: 16px;
+    color: #605e5c;
 }
 
 #emails{

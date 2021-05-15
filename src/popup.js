@@ -4,6 +4,18 @@ const outlookHost = 'outlook.office.com';
 
 document.addEventListener('DOMContentLoaded', changeName());
 //init big buttons
+document.getElementById('issue').addEventListener('click', () => {
+    chrome.windows.create(
+        {
+            focused:true,
+            type:"popup",
+            url: "help.html",
+            width: 600,
+            height: 500,
+        }
+    );
+})
+
 let refreshButton = document.getElementById("refresh-button");
 refreshButton.addEventListener('click', onRefresh);
 
@@ -267,8 +279,12 @@ function setUnreadCount(count) {
     if (count > 0) {
         el.innerHTML = count;
         el.parentElement.style.visibility = "visible";
+        document.getElementById("no-emails").style.display = "none";
     }
-    else el.parentElement.style.visibility = "collapse";
+    else {
+        el.parentElement.style.visibility = "collapse";
+        document.getElementById("no-emails").style.display = "visible";
+    }
 
     chrome.action.setBadgeBackgroundColor({ color: [208, 0, 24, 255] });
     console.log("display unread count: " + count);
