@@ -73,8 +73,8 @@
                                 <button id="back-icon" class="btn icon-button hover-dark " title="Back to Unread"><i
                                         class="ms-Icon ms-Icon--Back"></i></button>
                             </div>
-                            <div class="col p-0" style="overflow:hidden;">
-                                <p id="subject-expanded"></p>
+                            <div class="col p-0" style="overflow:hidden;align-self:center;">
+                                <p id="subject-expanded" class="go-to-inbox"></p>
                             </div>
                             <div class="col mail-icons-expanded idx-here" data-idx="">
                                 <button id="unread-extended" class="btn icon-button hover-dark"
@@ -115,11 +115,21 @@
                             </div>
                             <div class="row" style="margin:auto">
                                 <div class="col-12 p-1" id="body-container">
-                                    <iframe id="body-expanded" srcdoc="">
+                                    <!--iframe id="body-expanded" srcdoc="">
 
-                                    </iframe>
+                                    </iframe-->
                                 </div>
-
+                                <div class="p-1 idx-here" id="attach-card" data-idx="">
+                                    <div id="attachment-box" class="row">
+                                        <div class="col-1" id="attach-count">
+                                            +<span id="attach-number">1</span> 
+                                            <i class="ms-Icon ms-Icon--Attach "></i>
+                                        </div>
+                                        <div class="col" id="attach-names">
+                                            sample_file_name.pdf
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

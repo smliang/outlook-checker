@@ -27,7 +27,7 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
       
         let keyname = `${key}`;
         cache[keyname] = newValue;
-        if(keyname == "refresh_token:") console.log("updated " + keyname);
+        if(keyname == "refresh_token") console.log("updated " + keyname);
     }
     //console.log("CACHE AFTER SAVE", cache);
 });
@@ -104,7 +104,7 @@ function setUILogin() {
     chrome.action.setPopup({ 'popup': 'html/popup.html' });
     getInfo();
     update();
-    chrome.alarms.create('update', { periodInMinutes: .5 });
+    chrome.alarms.create('update', { periodInMinutes: .25 });
 }
 
 //handler to log in user
@@ -112,6 +112,10 @@ async function onMessage(request, sender, sendResponse) {
     //console.log("got message", request)
     if (request.login) {
         await login();
+    }
+    else if(request.refresh){
+        console.log("popup needs token update");
+        update();
     }
 }
 

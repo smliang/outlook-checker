@@ -1,15 +1,25 @@
 var cache = {};
+const refreshWindowMS = 10 * 60 * 1000;
 const outlookUrl = 'https://outlook.office.com/mail';
 const outlookHost = 'outlook.office.com';
 
 document.addEventListener('DOMContentLoaded', changeName());
+chrome.storage.onChanged.addListener((changes) => {
+    for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+
+        let keyname = `${key}`;
+        cache[keyname] = newValue;
+        if (keyname == "token") console.log("updated " + keyname + " in popup");
+    }
+    if (cache.waiting) getEmails();
+});
 //init big buttons
 
 document.getElementById('issue').addEventListener('click', () => {
     chrome.windows.create(
         {
-            focused:true,
-            type:"popup",
+            focused: true,
+            type: "popup",
             url: "help.html",
             width: 600,
             height: 500,
@@ -26,8 +36,8 @@ readButton.addEventListener('click', markAllAsRead);
 document.getElementById('new-mail').addEventListener('click', () => {
     chrome.windows.create(
         {
-            focused:true,
-            type:"popup",
+            focused: true,
+            type: "popup",
             url: "https://outlook.office.com/?path=/mail/action/compose",
             width: 600,
             height: 600,
@@ -105,32 +115,35 @@ function initTempButtons() {
     document.getElementById("reply-all-expanded").addEventListener('click', replyAllMessage);
     document.getElementById("forward-expanded").addEventListener('click', forwardMessage);*/
 
-    document.getElementById("openpopup-expanded").addEventListener('click',openPopup);
+    document.getElementById("openpopup-expanded").addEventListener('click', openPopup);
+    document.getElementById("attachment-box").addEventListener('click', openPopup);
 
 }
 
 //returns HTML ref to email that matches idx
-function findEmailIdx(idx){
+function findEmailIdx(idx) {
     let emails = document.getElementsByClassName("email");
-        for (email of emails) {
-            //console.log(email.dataset.idx);
-            if (email.dataset.idx == idx) {
-                emaillistref = email;
-                //console.log("found email!", emaillistref);
-                return emaillistref;
-            }
+    for (email of emails) {
+        //console.log(email.dataset.idx);
+        if (email.dataset.idx == idx) {
+            emaillistref = email;
+            //console.log("found email!", emaillistref);
+            return emaillistref;
         }
+    }
 }
 
 //todo add an event handler to update popup in case its open when we need a token refresh
 
 function changeName() {
-    chrome.storage.local.get(['token', 'displayName', 'email', 'unreadCount'], (res) => {
+    chrome.storage.local.get(['token', 'displayName', 'email', 'unreadCount', 'expiration'], (res) => {
         console.log('got info from cache: ', res);
         cache.token = res.token;
         cache.displayName = res.displayName;
         cache.email = res.email;
         cache.unread = res.unreadCount;
+        cache.expiration = res.expiration;
+        cache.waiting = false;
 
         //change info on top bar
         document.getElementById("user").innerHTML = cache.displayName;
@@ -160,6 +173,16 @@ function changeName() {
 
 //gets 25 emails
 async function getEmails() {
+    cache.waiting = false;
+    //make sure token isn't expired
+    const expiration = new Date(parseInt(cache.expiration));
+    let refreshTime = new Date(expiration.getTime() - refreshWindowMS);
+    if (new Date() >= refreshTime) {
+        console.log("popup needs token to refresh");
+        chrome.runtime.sendMessage({ refresh: true });
+        cache.waiting = true;
+        return; //this function will be called once we detect the token was updated
+    }
 
     let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=25&$filter=isRead eq false', {
         headers: new Headers({
@@ -202,7 +225,10 @@ function updateEmailDisplay() {
             let iconClass = (flagged ? "ms-Icon ms-Icon--EndPointSolid flagged" : "ms-Icon ms-Icon--Flag unflagged");
             let toolTip = (flagged ? "Unflag" : "Flag");
             let subStyle = (flagged ? "subject blue-bold" : "subject")
-            let bgColor = (flagged ? "flagged-mail" : "")
+            let bgColor = (flagged ? "flagged-mail" : "");
+
+            //attachement
+            let attach = (email.hasAttachments ? "block" : "none");
 
 
             let html = `<div class="row email ${bgColor}" data-idx=${i}>` +
@@ -213,6 +239,7 @@ function updateEmailDisplay() {
                 `</div>` +
                 `<div class="col">` +
                 `<div class="row">` +
+                `<div class="col attach" style="display:${attach}"> <i class="ms-Icon ms-Icon--Attach "></i> </div>` +
                 `<div class="col sender-box">` +
                 `<p class="sender">${email.from.emailAddress.name}<span style="font-style:italic; font-weight:normal"> ${email.from.emailAddress.address}</span></p>` +
                 `<p class="${subStyle}">${email.subject}</p>` +
@@ -272,13 +299,13 @@ function updateEmailDisplay() {
     emailsDiv.addEventListener('click', expandEmailView);
 
     //update counts because we only get 25 emails, so this will be more accurate unless there's more than 25 unread
-    console.log("cache says we have " + cache.unread +" unreads, we have " + cache.allEmails.length + " emails");
+    console.log("cache says we have " + cache.unread + " unreads, we have " + cache.allEmails.length + " emails");
     if (cache.unread < 25) {
         setUnreadCount(cache.allEmails.length);
         cache.unread = cache.allEmails.length;
     }
 
-    
+
 }
 
 function onRefresh(e) {
@@ -296,7 +323,7 @@ function setUnreadCount(count) {
     }
     else {
         el.parentElement.style.visibility = "collapse";
-        document.getElementById("no-emails").style.display = "visible";
+        document.getElementById("no-emails").style.display = "block";
     }
 
     chrome.action.setBadgeBackgroundColor({ color: [208, 0, 24, 255] });
@@ -313,7 +340,7 @@ function expandEmailView(e) {
         openEmailPreview(idx);
 
         //toggle read view in list if isn't already read
-        if(!cache.allEmails[idx].isRead){
+        if (!cache.allEmails[idx].isRead) {
             //also hide unread bar (i'm sorry this code is sO messy); have to do here because we're about to toggle
             document.getElementsByClassName("unread-bar expanded")[0].style.display = "block";
 
@@ -378,13 +405,13 @@ function toggleRead(e) {
     var icon = e.target.firstChild;
     var idx = e.path[5].dataset.idx;
     var email = cache.allEmails[idx];
-    var sender = e.path[2].firstChild.firstChild;
-    var subj = e.path[2].firstChild.lastChild;
+    var sender = e.path[2].children[1].firstChild;
+    var subj = e.path[2].children[1].lastChild;
     var bar = e.path[5].firstChild;
     //console.log("subj: ", subj);
 
 
-    //console.log("unread clicked!", e, icon, idx, email);
+    console.log("unread clicked!", e, icon, idx, email);
 
     toggleReadIcon(icon, sender, subj, bar);
     sendReadUpdate(idx);
@@ -499,12 +526,12 @@ async function sendArchiveUpdate(idx) {
     //console.log("send message to archive", res.json());
     cache.allEmails[idx].parentFolderId = cache.archive;
     cache.allEmails[idx].displayed = false;
-    if(!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
+    if (!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
 }
 
-async function archiveAll(){
+async function archiveAll() {
     emails = document.getElementsByClassName('email');
-    for(email of emails){
+    for (email of emails) {
         email.style.maxHeight = 0;
         await sendArchiveUpdate(email.dataset.idx);
     }
@@ -544,7 +571,7 @@ async function sendDeleteUpdate(idx) {
     //console.log("send deleded message successful");
     cache.allEmails[idx].parentFolderId = cache.archive;
     cache.allEmails[idx].displayed = false;
-    if(!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
+    if (!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
 }
 
 
@@ -552,7 +579,7 @@ function toggleFlag(e) {
     var icon = e.target.firstChild;
     var idx = e.path[5].dataset.idx;
     var emailDiv = e.path[5];
-    var subj = e.path[2].firstChild.lastChild;
+    var subj = e.path[2].children[1].lastChild;
     //console.log("subj: ", subj);
 
 
@@ -566,7 +593,7 @@ function toggleFlag(e) {
 function toggleFlagIcon(iconref, subjref, emailref) {
     //console.log("toggle flag state", iconref);
     if (iconref.dataset.flagged == "false") { //unflagged, change to flagged
-       // console.log("toggle unflag to flag")
+        // console.log("toggle unflag to flag")
 
         //changing list icons
         iconref.className = "ms-Icon ms-Icon--EndPointSolid";
@@ -578,7 +605,7 @@ function toggleFlagIcon(iconref, subjref, emailref) {
     }
     else {
         //change to flagged: change to unflag
-       // console.log("toggle flag to unflagged: ", iconref.className);
+        // console.log("toggle flag to unflagged: ", iconref.className);
 
         //changing list icons
         iconref.className = "ms-Icon ms-Icon--Flag";
@@ -594,7 +621,7 @@ function toggleFlagIcon(iconref, subjref, emailref) {
 function toggleFlagExpanded() {
     let buttonref = document.getElementById("flag-extended");
     let iconref = buttonref.firstChild;
-   // console.log("icon: ", iconref);
+    // console.log("icon: ", iconref);
     if (iconref.dataset.flagged == "false") { //flag it!
         document.getElementById("email-expand-view").classList.add("flagged-mail");
         iconref.classList.remove("ms-Icon--Flag");
@@ -613,7 +640,7 @@ function toggleFlagExpanded() {
 async function sendFlagUpdate(idx) {
     var newFlagValue = (cache.allEmails[idx].flag.flagStatus == "notFlagged" ? "flagged" : "notFlagged");
     var id = cache.allEmails[idx].id;
-//    console.log("email flag is now ", newFlagValue);
+    //    console.log("email flag is now ", newFlagValue);
 
     let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/' + id, {
         method: 'PATCH',
@@ -641,13 +668,13 @@ async function sendFlagUpdate(idx) {
     console.log(res);
 }
 
-async function openPopup(e){
+async function openPopup(e) {
     let idx = e.target.parentElement.dataset.idx;
     let id = cache.allEmails[idx].id;
     chrome.windows.create(
         {
-            focused:true,
-            type:"popup",
+            focused: true,
+            type: "popup",
             url: cache.allEmails[idx].webLink,
             width: 600,
             height: 600,
@@ -767,7 +794,7 @@ async function forwardMessage(e){
 */
 
 const colors = [
-"pinkRed10",
+    "pinkRed10",
     "red20",
     "red10",
     "orange20",
@@ -797,6 +824,26 @@ async function initExpandedTemplate(idx) {
     let email = cache.allEmails[idx];
     //console.log(template);
 
+    //body
+    document.getElementById("body-container").innerHTML = `<iframe id="body-expanded" srcdoc=""></iframe>`
+    let body = document.getElementById("body-expanded");
+    try { body.srcdoc = `${email.body.content}`; } catch (e) { console.log(e) }
+    setTimeout(() => { //just waiting a sec to load bc idk how to actually get an event onload() that waits for the srcdoc
+        let height = body.contentWindow.document.documentElement.scrollHeight + 15 + 'px';
+        console.log("height: ", height);
+        body.style.height = height;
+        body.style.maxHeight = height;
+        //body.style.height = "auto";
+
+        let links = body.contentWindow.document.documentElement.querySelectorAll("a");
+        //console.log("body links: ", links);
+        for (link of links) {
+            link.target = "_blank";
+        }
+    }, 100);
+
+    initAttachments(email);
+
     //flag status
     let current = (document.getElementById("flag-extended").firstChild.dataset.flagged == "true");
     let mailFlag = email.flag.flagStatus == "flagged";
@@ -805,7 +852,9 @@ async function initExpandedTemplate(idx) {
     }
 
     // subject 
-    document.getElementById("subject-expanded").innerHTML = email.subject;
+    let subj = document.getElementById("subject-expanded");
+    subj.innerHTML = email.subject;
+    subj.title = email.subject;
     // set up icon
     let icon = document.getElementById('expanded-initial');
     //console.log("color: ", email.color);
@@ -835,13 +884,13 @@ async function initExpandedTemplate(idx) {
     if (recipients.length != 0) {
         recipients = recipients.substring(0, recipients.length - 1);
         to.innerHTML = `<span style="font-weight:600">To:</span>` + recipients;
-        to.title = rectip.substring(0,rectip.length-1);
+        to.title = rectip.substring(0, rectip.length - 1);
     }
 
     let ccrecipients = email.ccRecipients;
     let ccrecip = "";
     let tip = "";
-    for(recipient of ccrecipients){
+    for (recipient of ccrecipients) {
         let email = recipient.emailAddress.address;
         let name = recipient.emailAddress.name;
         let line = ` <span style="text-decoration:underline">${name}</span>,`;
@@ -853,19 +902,8 @@ async function initExpandedTemplate(idx) {
         let ccdiv = document.getElementById("cc-expanded");
         ccrecip = ccrecip.substring(0, ccrecip.length - 1);
         ccdiv.innerHTML = `<span style="font-weight:600">Cc:</span>` + ccrecip;
-        ccdiv.title = tip.substring(0,tip.length-1);
+        ccdiv.title = tip.substring(0, tip.length - 1);
     }
-
-    document.getElementById("body-container").innerHTML = `<iframe id="body-expanded" srcdoc=""></iframe>`
-    let body = document.getElementById("body-expanded");
-    body.srcdoc = `${email.body.content}`;
-    setTimeout(() => { //just waiting a sec to load bc idk how to actually get an event onload() that waits for the srcdoc
-        let height = body.contentWindow.document.documentElement.scrollHeight + 15 + 'px';
-        console.log("height: ", height);
-        body.style.height = height;
-        body.style.maxHeight = height;
-        //body.style.height = "auto";
-    }, 100);
 
     //add idx data where needed
     let idxPlaces = document.getElementsByClassName("idx-here");
@@ -877,6 +915,46 @@ async function initExpandedTemplate(idx) {
 
 
 
+}
+
+async function initAttachments(email) {
+    //figure out if attachments exist
+    if (email.hasAttachments) {
+        let card = document.getElementById("attach-card");
+        card.style.display = "block";
+        //get attachments
+        let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/' + email.id + "/attachments", {
+            method: 'GET',
+            headers: new Headers({
+                'Authorization': 'Bearer ' + cache.token,
+                'Content-Type': 'application/json'
+            })
+        });
+
+        if (!res.ok) {
+            await console.log(res.json());
+            throw new Error('HTTP error: status = ' + res.status);
+        }
+
+        res = await res.json();
+        email.attachments = res.value
+        //console.log("attachments:", email.attachments);
+        let num = email.attachments.length;
+        let names = ""
+        for (attachment of email.attachments) {
+            names = names + `${attachment.name},`
+        }
+        //console.log("filenames: ", names);
+        document.getElementById("attach-number").innerHTML = num;
+        let namesDiv = document.getElementById("attach-names");
+        names = names.substring(0, names.length - 1);
+        namesDiv.innerHTML = names;
+        card.title = names;
+
+
+    } else {
+        document.getElementById("attach-card").style.display = "none";
+    }
 }
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
