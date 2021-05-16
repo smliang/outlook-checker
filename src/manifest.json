@@ -8,7 +8,8 @@
       "notifications",
       "storage",
       "identity",
-      "tabs"
+      "tabs",
+      "contextMenus"
     ],
     "background":{
         "service_worker": "background.js"
@@ -17,12 +18,14 @@
       "default_title": "Outlook Checker",
       "default_icon": { 
         "16": "icons/outlook_16x1.png",
+        "32": "icons/outlook_32x1.png",
         "48": "icons/outlook_48x1.png"
       },
-      "default_popup": "popup.html"
+      "default_popup": "html/popup.html"
     },
     "icons": { 
       "16": "icons/outlook_16x1.png",
+      "32": "icons/outlook_32x1.png",
       "48": "icons/outlook_48x1.png",
      "128": "icons/outlook_128x1.png",
      "512": "icons/outlook_512x1.png"

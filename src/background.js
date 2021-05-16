@@ -13,8 +13,12 @@ var cache = {}; //fixme will i ever have to load this cache???
 
 chrome.runtime.onInstalled.addListener(function () {
     //set to logout state
-    console.log("hello");
+    console.log("starting up!");
     setUILogout();
+    chrome.contextMenus.onClicked.addListener((e) => {
+        if(e.menuItemId == "login") login();
+        else if(e.menuItemId == "logout") setUILogout();
+    })
 
 });
 
@@ -47,17 +51,29 @@ async function setCache(){
 function setUILogout() {
     chrome.storage.local.clear(() => {
         console.log("logout: storage cleared");
-        alert("storage cleared");
+        //alert("storage cleared");
         chrome.storage.local.set({ login: false })
     });
-    
+     chrome.action.setBadgeText({text: ''});
+     chrome.contextMenus.removeAll(() => {
+         //console.log("adding browser action");
+        chrome.contextMenus.create({
+            title: "Login Outlook Checker",
+            id: "login",
+            contexts: ["action"]
+        });
+    });
 
-    //chrome.storage.local.get(['login'], function(result){console.log(result.login)});
-    //TODO: add new loggedout icon chrome.browserAction.setIcon({path: 'PUTPATHHERE'});
-    // chrome.browserAction.setBadgeText({text: ''});
+    chrome.action.setIcon({
+        path:
+            { 
+                "16": "icons/bw/bw_16.png",
+                "32": "icons/bw/bw_32.png"
+            }
+    });
 
     //change to login popup
-    chrome.action.setPopup({ 'popup': 'popup_logged_out.html' });
+    chrome.action.setPopup({ 'popup': 'html/popup_logged_out.html' });
 
     //stop refresh timer
     chrome.alarms.clearAll();
@@ -65,10 +81,27 @@ function setUILogout() {
 
 function setUILogin() {
     chrome.storage.local.set({ 'login': true });
-    //chrome.action.setIcon({path: 'icons/icon.png'}); //TODO: add more icon sizes
-    //   chrome.browserAction.setBadgeBackgroundColor({color: [208, 0, 24, 255]});
-    //   chrome.browserAction.setBadgeText({text: ''});
-    chrome.action.setPopup({ 'popup': 'popup.html' });
+    
+    chrome.action.setBadgeBackgroundColor({color: [208, 0, 24, 255]});
+    chrome.action.setBadgeText({text: ''});
+
+    chrome.contextMenus.removeAll(() => {
+        chrome.contextMenus.create({
+            title: "Logout Outlook Checker",
+            id: "logout",
+            contexts: ["action"]
+        });
+    });
+
+    chrome.action.setIcon({
+        path:
+            { 
+                16: "icons/outlook_16x1.png",
+                32: "icons/outlook_32x1.png"
+            }
+    });
+    
+    chrome.action.setPopup({ 'popup': 'html/popup.html' });
     getInfo();
     update();
     chrome.alarms.create('update', { periodInMinutes: .5 });
@@ -85,7 +118,7 @@ async function onMessage(request, sender, sendResponse) {
 async function login() {
     const state = Date.now().toString();
     const redirectUrl = chrome.identity.getRedirectURL();
-    console.log("REDIRECT:", redirectUrl);
+    //console.log("REDIRECT:", redirectUrl);
     const codeVerifier = createRandomString();
     const hash = await sha256(codeVerifier);
     const codeChallenge = bufferToBase64UrlEncoded(hash);
@@ -107,7 +140,7 @@ async function login() {
 
     const responseUrl = await launchWebAuthFlow;
 
-    console.log("LOGIN ATTEMPT");
+    //console.log("LOGIN ATTEMPT");
 
     var params = (new URL(responseUrl)).searchParams;
     if (params.get("state") !== state) {
@@ -142,7 +175,7 @@ async function login() {
 
 async function saveToken(res) {
     const expiration = new Date(Date.now() + parseInt(res.expires_in) * 1000);
-    console.log("refresh token at save: ", res.refresh_token);
+    console.log("refresh token at save: ", res.refresh_token.substring(0,10));
     //chrome.storage.local.get(['token'], function (res) { console.log("check token after save" + res.token) });
     var save = new Promise( (resolve) => {
             chrome.storage.local.set({ 
@@ -157,7 +190,7 @@ async function saveToken(res) {
     const running = await save;
     //probably have to rethink this entire thing, but lets wait like 1 second to see if the event handler will run
     await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log("done save and wait!");
+    //console.log("done save and wait!");
     
 }
 
@@ -230,7 +263,7 @@ async function checkRefreshToken() {
 }
 
 async function refreshToken() {
-    console.log("refresh! token: ", cache.refresh_token);
+    console.log("refresh token: ", cache.refresh_token.substring(0,10));
     let res = await fetch(tokenEndpoint, {
         method: 'POST',
         body: new URLSearchParams({
@@ -253,11 +286,10 @@ async function refreshToken() {
 
 async function getUnreadCount() {
     console.log("checking unread count");
-    //TODO for now to avoid errors im just gonna return if token is null
     if(cache.token == undefined) {
         console.log("token undefined!");
-        refreshToken();
-    };
+        await refreshToken();
+    }
     console.log("check token before getting unread: " + cache.token.substring(0, 10));
     let res = await fetch('https://graph.microsoft.com/v1.0/me/mailFolders/inbox?$select=unreadItemCount', {
         headers: new Headers({
@@ -277,7 +309,7 @@ async function getUnreadCount() {
 
 function setUnreadCount(count) {
     chrome.action.setBadgeBackgroundColor({ color: [208, 0, 24, 255] });
-    console.log("count: "+count);
+    //console.log("count: "+count);
     chrome.action.setBadgeText({
         text: count === 0 ? '' : count.toString()
     });

@@ -1,0 +1,422 @@
+/*import MS fabric https://uifabricicons.azurewebsites.net/ */
+@import 'fabric.min.css';
+@import 'ms-fabric/css/fabric-icons.css';
+
+
+* {
+    font-family: "Segoe UI", "Segoe UI Web (West European)", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    /*outline: 1px solid red !important;
+    overflow: visible !important;*/
+    overflow:hidden;
+}
+
+.ms-Icon{
+    font-size:18px;
+}
+
+.sticky-header{
+    position:fixed;
+    width:600px;
+    z-index: 100;
+}
+
+.spacer {
+    height:97px;
+}
+
+h1 {
+    /*font-weight: 600; this is important for the circles*/
+    color: white;
+    font-size: 28px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-weight:600;
+}
+
+.title i {
+    color:#004578;
+}
+
+.title button {
+    margin-left:auto;
+    min-width:45px;
+}
+
+.title button:hover{
+    background-color:#2b88d8;
+}
+
+
+.title, .idBar {
+    
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    padding-right: 8px;
+
+}
+
+.title {
+    height: 60px;
+    font-size: 20px;
+}
+
+.title * , .idBar * {
+ margin: 8 0 8 0;
+}
+
+.idBar {
+    font-size: 16px;
+    height: 38px;
+
+}
+
+#toolbar-buttons {
+    margin-left: 5px;
+    width: 142px;
+}
+
+.toolbar-icon{
+    margin:0;
+}
+
+body {
+    margin:0px;
+    max-height:596px;
+    width: 600px
+}
+
+#user{
+    font-weight: 600;
+}
+
+.login-box{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.go-to-inbox{
+    cursor:pointer;
+}
+
+.container{
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:0;
+}
+
+#no-emails{
+    text-align: center;
+    margin-top: 16px;
+    font-size: 16px;
+    color: #605e5c;
+}
+
+#emails{
+    max-width:600px;
+    max-height: 0px;
+    overflow-y:scroll;
+    transition-property: all;
+    transition-duration: .25s;
+    transition-timing-function: ease-out;
+    opacity: 1;
+}
+
+.expand{
+    max-height: 500px !important;
+}
+
+.expand-view{
+    /*for maybe when i can figure out the ani
+    max-width: 0px;
+    opacity:0 !important;*/
+    display:none !important;
+}
+
+#email-expand-view{
+    /*background-color:blue; */
+    visibility:hidden;
+    display:none;
+    padding:0;
+}
+
+/*for the email-expand view div*/
+.expand-view + .col{
+    visibility: visible !important;
+    display: inherit !important;
+}
+
+.email {
+    padding:0;
+    /*padding: 5px;
+    padding-top: 10px;
+    padding-bottom: 10px;*/
+    border-bottom:1px solid rgba(211, 211, 211, 0.39);
+    overflow: hidden;
+    height: auto;
+    max-height: 140px;
+    transition-property: max-height;
+    transition-duration: .5s;
+    justify-content: center;
+    cursor: pointer;
+
+}
+
+.unread-bar{
+    max-width:5px;
+    background-color: #0078d4;
+    padding:5px;
+    opacity: 1;
+    transition-property:opacity;
+    transition-duration: .5s;
+}
+
+.unread-bar.read{
+    opacity: 0;
+}
+
+.padding{
+    margin-right: 10px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    width:97%;
+}
+
+/*.email:hover{
+    background-color:rgba(211, 211, 211, 0.39);
+}*/
+
+.email:hover .mail-icons {
+    visibility:visible;
+    max-width:150px;
+    opacity: 1;
+}
+
+
+.email * {
+    pointer-events: none;
+}
+
+.email p, .email-expanded-container {
+    margin-bottom:0;
+    font-size:14px;
+    
+}
+
+
+.body{
+    font-size:14px;
+    line-height: normal;
+}
+
+.subject,.sender{
+    font-weight:600;
+    text-overflow: ellipsis;
+}
+
+.subject{
+    line-height: .8;
+    padding-bottom: 6px;
+    color: #0078d4;
+}
+
+.blue-bold{
+    color: #0078d4;
+    font-weight: 600px;
+}
+
+.icon{
+    align-items: center;
+    display: flex;
+    margin-right: 15px;
+
+}
+
+.initial{
+    display:inline-block;
+    font-size:1.5em;
+    min-width:2.2em;
+    min-height:2.2em;
+    line-height:2em;
+    text-align:center;
+    border-radius:50%;
+    /*background:#0d6efd;*/
+    vertical-align:middle;
+    margin-right:1em;
+    color:white;
+    font-weight: normal;
+    padding:0;
+}
+
+.sender-box{
+    text-align:left;
+    
+}
+
+.time-box, .sender-box{
+    overflow: hidden;
+    white-space: nowrap;
+    align-self:center;
+}
+
+.time{
+    text-align:right;
+}
+
+.mail-icons{
+    display:flex;
+    overflow:hidden;
+    /*visibility:collapse;*/
+    max-width:0;
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: ease;
+    transition-duration: 1s;
+    padding: 0;
+    justify-content: flex-end;
+}
+
+.mail-icons *{
+    margin-right: 2px;
+    
+}
+
+i {
+    pointer-events: none;
+}
+
+.icon-button{
+    padding:0;
+    border-radius: 0;
+    min-width:32px;
+    min-height:32px;
+    pointer-events: auto;
+}
+
+.icon-button:hover{
+    background-color:rgb(243, 242, 241);
+}
+
+
+.mail-icons-expanded {
+    visibility:visible;
+    opacity: 1;
+    display:flex;
+    justify-content:flex-end;
+    max-height:32px;
+    max-width:152px;
+    width:152px;
+}
+
+
+.reply-icons-expanded {
+    visibility:visible;
+    opacity: 1;
+    display:flex;
+    justify-content:flex-end;
+    max-height:40px;
+    max-width:152px;
+}
+
+#reply-expanded {
+    display:flex;
+    align-items:center;
+}
+
+
+.reply i {
+    margin:5px;
+}
+
+.subject-header{
+    height: 45px;
+    align-content: center;
+    padding-left:8px;
+    padding-right:8px;
+}
+
+#subject-expanded{
+    font-weight:600;
+    width:390px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    font-size:18px;
+    padding:0;
+    margin:0;
+    align-self: center;    
+}
+
+.hover-dark:hover{
+    background-color:#e1dfdd !important;
+}
+
+.sender-box *{
+    margin:0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#sender-expanded{
+    width:400px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+}
+
+.sender-expanded-unread{
+    font-size:16px;
+    color: #0078d4;
+    font-weight:600;
+}
+
+.sender-expanded-read{
+    font-size:16px;
+    color: black;
+    font-weight:600;
+}
+
+#to{
+    font-size:12px;
+}
+
+.padding-expanded{
+    /*margin-right: 10px;*/
+    padding-top: 10px;
+    padding-bottom: 10px;
+    display: flex;
+    width:97%;
+}
+
+#body-expanded{
+    padding: 5px;
+    border:2px solid rgba(211, 211, 211, 0.39);
+    overflow:hidden;
+    width:100%;
+    height:360px;
+    background-color:white;
+    transition-property:max-height;
+    transition-duration:.2s;
+}
+
+.unread-bar.expanded{
+    padding:3px;
+}
+
+.flagged-mail{
+    background-color: lightyellow;
+}
+
+.email-expanded-container{
+    background-color: #faf9f8;
+    max-height: 457px;
+    overflow: scroll;
+}
+
+.flagged-mail .flag i, .flagged-mail #flag-extended i {
+    color: #a4262c;
+}

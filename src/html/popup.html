@@ -1,0 +1,136 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="../css/bootstrap-5.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/popup.css">
+</head>
+
+<body class="ms-Fabric">
+    <div class="sticky-header">
+        <div class="title ms-bgColor-themePrimary">
+            <!--img src="icons/icon.png" class="go-to-inbox" style="width: 30px; padding-right: 5px"-->
+            <h1 class="go-to-inbox">Outlook Checker</h1>
+            <button class="btn icon-button" id="issue" title="Report an Issue"><i
+                    class="ms-Icon ms-Icon--Help"></i></button>
+        </div>
+        <div class="idBar ms-bgColor-neutralLight">
+            <p id="user" class="go-to-inbox">PlaceHolder</p>
+            <p id="email" class="go-to-inbox" style="margin-left:5px; margin-right:auto">second@placeholder.net</p>
+            <span class="badge rounded-pill go-to-inbox ms-bgColor-themeSecondary" style="visibility:collapse"><span
+                    id="numUnread"></span> Unread</span>
+            <div id="toolbar-buttons">
+                <button class="btn icon-button toolbar hover-dark" id="new-mail" title="Compose New Message"><i
+                    class="ms-Icon ms-Icon--NewMail toolbar-icon"></i></button>
+                <button class="btn icon-button toolbar hover-dark" id="mark-all" title="Mark All As Read"><i
+                        class="ms-Icon ms-Icon--Read toolbar-icon"></i></button>
+                <button class="btn icon-button toolbar hover-dark" id="archive-all" title="Archive All"><i
+                        class="ms-Icon ms-Icon--Archive toolbar-icon"></i></button>
+                <button class="btn icon-button toolbar hover-dark" id="refresh-button" title="Refresh"><i
+                        class="ms-Icon ms-Icon--Refresh toolbar-icon"></i></button>
+            </div>
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="container">
+        <div class="row" id="no-emails">
+            <p>You have no new messages.</p>
+        </div>
+        <div class="row" style="margin:0">
+            <div id="emails" class="col">
+
+                <!--div class="row email" data-idx="0"> <--THIS STUFF IS HANDLED BY popup.js updateEmailDisplay()->
+                        <div class="col-1 icon">
+                            <h1 class="initial">C</h1>
+                        </div>
+                        <div class="col">
+                            <div class="row">
+                                <div class="col sender-box">
+                                    <p class="sender">Sender Name<span style="font-style:italic; font-weight:normal"> email@sender.net</span></p>
+                                    <p class="subject">Email Subject Will Go Here Email Subject Will Go Here</p>
+                                </div>
+                                <div class="col-4 mail-icons mt-1">
+                                    <button class="btn icon-button readToggle" title="Mark as Read"><i class="ms-Icon ms-Icon--Mail"></i></button>
+                                    <button class="btn icon-button archive" title="Archive"><i class="ms-Icon ms-Icon--Archive"></i></button>    
+                                    <button class="btn icon-button delete" title="Delete"><i class="ms-Icon ms-Icon--Delete"></i></button>    
+                                    <button class="btn icon-button flag" title="Flag"><i class="ms-Icon ms-Icon--Flag unflagged"></i></button>    
+                                </div>
+                                <div class="col-2 time-box">10:30 pm</div>
+                            </div>
+                            
+                            
+                            
+                            <p class="body">the body preview of this wonderful email will go here. i hope it looks good. the body preview of this wonderful email will go here. i hope it looks good. </p>
+                            
+                        </div>
+                    </div-->
+
+            </div>
+            <div class="col" id="email-expand-view">
+                <div class="row" style="margin: auto; width: 600px;">
+                    <div class="col">
+                        <div class="row subject-header ms-bgColor-neutralLighter">
+                            <div class="col-1 p-0">
+                                <button id="back-icon" class="btn icon-button hover-dark " title="Back to Unread"><i
+                                        class="ms-Icon ms-Icon--Back"></i></button>
+                            </div>
+                            <div class="col p-0" style="overflow:hidden;">
+                                <p id="subject-expanded"></p>
+                            </div>
+                            <div class="col mail-icons-expanded idx-here" data-idx="">
+                                <button id="unread-extended" class="btn icon-button hover-dark"
+                                    title="Mark as Unread"><i class="ms-Icon ms-Icon--Mail read "></i></button>
+                                <button id="archive-extended" class="btn icon-button hover-dark" title="Archive"><i
+                                        class="ms-Icon ms-Icon--Archive"></i></button>
+                                <button id="delete-extended" class="btn icon-button hover-dark" title="Delete"><i
+                                        class="ms-Icon ms-Icon--Delete"></i></button>
+                                <button id="flag-extended" class="btn icon-button hover-dark" title="Flag"><i
+                                        class="ms-Icon ms-Icon--Flag" data-flagged="false"></i></button>
+                            </div>
+                        </div>
+                        <div class="row email-expanded-container">
+                            <div class="col unread-bar expanded go-to-inbox"></div>
+                            <div id="sender-box-expanded" class="col padding-expanded go-to-inbox">
+                                <div class="col-1 icon">
+                                    <h1 id="expanded-initial" class="initial ms-bgColor-sharedred10">B</h1>
+                                </div>
+                                <div class="col">
+                                    <div class="row">
+                                        <div class="col sender-box">
+                                            <p id="sender-expanded" class="sender-expanded-unread"></p>
+                                            <p id="time-expanded"></p>
+                                            <p id="to-expanded"></p>
+                                            <p id="cc-expanded"></p>
+                                        </div>
+                                        <div class="col reply-icons-expanded idx-here" data-idx="">
+                                            <button id="openpopup-expanded" class="btn icon-button reply"
+                                                title="View, Reply, and Forward in Popup Window">
+                                                <i class="ms-Icon ms-Icon--OpenInNewWindow "></i>
+                                                <i class="ms-Icon ms-Icon--Reply "></i>
+                                                <i class="ms-Icon ms-Icon--ReplyAll"></i>
+                                                <i class="ms-Icon ms-Icon--Forward"></i></button>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" style="margin:auto">
+                                <div class="col-12 p-1" id="body-container">
+                                    <iframe id="body-expanded" srcdoc="">
+
+                                    </iframe>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="../css/bootstrap-5.0.0/js/bootstrap.bundle.js"></script>
+    <script src="../js/popup.js"></script>
+</body>
+
+</html>
