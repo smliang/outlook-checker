@@ -9,36 +9,21 @@ const outlookHostFilter = {
 };
 
 var cache = {}; //fixme will i ever have to load this cache???
+setCache();
+chrome.runtime.onMessage.addListener(onMessage);
+chrome.alarms.onAlarm.addListener(onAlarm);
 
 
 chrome.runtime.onInstalled.addListener(function () {
     //set to logout state
     console.log("starting up!");
-    chrome.storage.local.set({protocolHandlingWait: true});
     setUILogout();
 });
 
 chrome.contextMenus.onClicked.addListener((e) => {
     if(e.menuItemId == "login") login();
     else if(e.menuItemId == "logout") setUILogout();
-    else if(e.menuItemId == "mailto off") {
-        console.log("turning off mailto!");
-        chrome.tabs.create(
-            {
-                url: "chrome://settings/handlers"
-            }
-        );
-        chrome.storage.local.set({protocolHandling: false});
-    }
-    else if(e.menuItemId == "mailto on"){
-        console.log("turning on mailto!");
-        chrome.storage.local.set({protocolHandlingWait: true});
-        chrome.tabs.create(
-            {
-                url: "https://outlook.office.com/mail"
-            }
-        );
-    }
+    
 })
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -47,32 +32,9 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
         let keyname = `${key}`;
         cache[keyname] = newValue;
         if(keyname == "refresh_token") console.log("updated " + keyname);
-        if(keyname == "protocolHandling"){
-            if(newValue){
-                chrome.contextMenus.create({
-                    title: "Turn off Mailto: Handling in Chrome Settings",
-                    id: "mailto off",
-                    contexts: ["action"]
-                }, () => {
-                    chrome.contextMenus.remove("mailto on");
-                    
-                });
-            }
-            else{
-                chrome.contextMenus.create({
-                    title: "Turn on Mailto: Handling",
-                    id: "mailto on",
-                    contexts: ["action"]
-                }, () => chrome.contextMenus.remove("mailto off"));
-            }
-        }
     }
     //console.log("CACHE AFTER SAVE", cache);
 });
-
-chrome.runtime.onMessage.addListener(onMessage);
-
-chrome.alarms.onAlarm.addListener(onAlarm);
 
 async function setCache(){
     return new Promise((resolve, reject) => {
@@ -81,6 +43,7 @@ async function setCache(){
                 return reject(chrome.runtime.lastError);
             }
             Object.assign(cache, items);
+            if(cache.login) chrome.alarms.create('update', { periodInMinutes: 1 });
             resolve;
         })
     })
@@ -142,7 +105,7 @@ function setUILogin() {
     chrome.action.setPopup({ 'popup': 'html/popup.html' });
     getInfo();
     update();
-    chrome.alarms.create('update', { periodInMinutes: .25 });
+    chrome.alarms.create('update', { periodInMinutes: 1 });
 }
 
 //handler to log in user
