@@ -53,10 +53,12 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
                     title: "Turn off Mailto: Handling in Chrome Settings",
                     id: "mailto off",
                     contexts: ["action"]
-                }, () => chrome.contextMenus.remove("mailto on"));
+                }, () => {
+                    chrome.contextMenus.remove("mailto on");
+                    
+                });
             }
             else{
-                chrome.storage.local.set({protocolHandling: false});
                 chrome.contextMenus.create({
                     title: "Turn on Mailto: Handling",
                     id: "mailto on",

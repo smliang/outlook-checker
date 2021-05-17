@@ -13,11 +13,6 @@ async function askRegisterProtocolHandler(){
 
     } else {
         chrome.storage.local.set({protocolHandling: false});
-        chrome.contextMenus.create({
-            title: "Turn on Mailto: Handling",
-            id: "mailto on",
-            contexts: ["action"]
-        });
     }
 }
 

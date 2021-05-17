@@ -144,17 +144,16 @@ function changeName() {
         cache.unread = res.unreadCount;
         cache.expiration = res.expiration;
         cache.waiting = false;
+        cache.flagSending = false;
+        cache.readSending = false;
+        cache.markingRead = false;
+        cache.archivingAll = false;
 
         //change info on top bar
         document.getElementById("user").innerHTML = cache.displayName;
         document.getElementById("email").innerHTML = cache.email;
 
-        if (cache.unread > 0) {
-            let el = document.getElementById("numUnread");
-            el.innerHTML = cache.unread;
-            el.parentElement.style.visibility = "visible";
-        }
-
+        setUnreadCount(cache.unread);
 
         let links = document.getElementsByClassName("go-to-inbox");
         //console.log("links!: ", links);
@@ -299,6 +298,7 @@ function updateEmailDisplay() {
     emailsDiv.addEventListener('click', expandEmailView);
 
     //update counts because we only get 25 emails, so this will be more accurate unless there's more than 25 unread
+    cache.displayedCount = cache.allEmails.length;
     console.log("cache says we have " + cache.unread + " unreads, we have " + cache.allEmails.length + " emails");
     if (cache.unread < 25) {
         setUnreadCount(cache.allEmails.length);
@@ -323,7 +323,7 @@ function setUnreadCount(count) {
     }
     else {
         el.parentElement.style.visibility = "collapse";
-        document.getElementById("no-emails").style.display = "block";
+        if (cache.displayedCount <= 0) document.getElementById("no-emails").style.display = "block";
     }
 
     chrome.action.setBadgeBackgroundColor({ color: [208, 0, 24, 255] });
@@ -402,19 +402,21 @@ async function openOutlookInbox() {
 }
 
 function toggleRead(e) {
-    var icon = e.target.firstChild;
-    var idx = e.path[5].dataset.idx;
-    var email = cache.allEmails[idx];
-    var sender = e.path[2].children[1].firstChild;
-    var subj = e.path[2].children[1].lastChild;
-    var bar = e.path[5].firstChild;
-    //console.log("subj: ", subj);
+    if (!cache.readSending) {
+        var icon = e.target.firstChild;
+        var idx = e.path[5].dataset.idx;
+        var email = cache.allEmails[idx];
+        var sender = e.path[2].children[1].firstChild;
+        var subj = e.path[2].children[1].lastChild;
+        var bar = e.path[5].firstChild;
+        //console.log("subj: ", subj);
 
 
-    console.log("unread clicked!", e, icon, idx, email);
+        console.log("unread clicked!", e, icon, idx, email);
 
-    toggleReadIcon(icon, sender, subj, bar);
-    sendReadUpdate(idx);
+        toggleReadIcon(icon, sender, subj, bar);
+        sendReadUpdate(idx);
+    }
 
 }
 
@@ -442,6 +444,7 @@ function toggleReadIcon(iconref, sendref, subjref, barref) {
 }
 
 async function sendReadUpdate(idx) {
+    cache.readSending = true;
     var newReadValue = !cache.allEmails[idx].isRead;
     var id = cache.allEmails[idx].id;
     //console.log("email read is now ", newReadValue);
@@ -464,7 +467,7 @@ async function sendReadUpdate(idx) {
     }
 
     cache.allEmails[idx].isRead = !cache.allEmails[idx].isRead;
-
+    cache.readSending = false;
     //console.log("finished talking to update read");
     //res = await res.json();
     //console.log(res);
@@ -472,23 +475,33 @@ async function sendReadUpdate(idx) {
 
 
 async function markAllAsRead() {
-    console.log("marking all as read");
-    let emails = document.getElementsByClassName("email");
-    //console.log("emails: ", emails);
-    for (emailDiv of emails) {
-        let i = emailDiv.dataset.idx
-        let email = cache.allEmails[i];
-        if (email.displayed > 0 && !email.isRead) { //grab emails that havent been read, archived, or deleted
+    if (!cache.markingRead) {
+        console.log("marking all as read");
+        cache.markingRead = true;
+        let emails = document.getElementsByClassName("email");
+        //console.log("emails: ", emails);
+        for (emailDiv of emails) {
+            let i = emailDiv.dataset.idx
+            let email = cache.allEmails[i];
+            if (email.displayed > 0 && !email.isRead) { //grab emails that havent been read, archived, or deleted
 
-            let icon = emailDiv.getElementsByClassName("ms-Icon")[0];
-            let subj = emailDiv.getElementsByClassName("subject")[0];
-            let sender = emailDiv.getElementsByClassName("sender")[0];
-            let bar = emailDiv.firstChild;
-            //console.log("icon: ", icon, subj, sender);
+                let icon = emailDiv.getElementsByClassName("ms-Icon")[1];
+                let subj = emailDiv.getElementsByClassName("subject")[0];
+                let sender = emailDiv.getElementsByClassName("sender")[0];
+                let bar = emailDiv.firstChild;
+                //console.log("icon: ", icon, subj, sender);
 
-            toggleReadIcon(icon, sender, subj, bar);
-            await sendReadUpdate(i);
+                toggleReadIcon(icon, sender, subj, bar);
+            }
         }
+        for (emailDiv of emails) {
+            let i = emailDiv.dataset.idx
+            let email = cache.allEmails[i];
+            if (email.displayed > 0 && !email.isRead) {
+                await sendReadUpdate(i);
+            }
+        }
+        cache.markingRead = false;
     }
 }
 
@@ -497,7 +510,8 @@ function archiveMessage(e) {
     var idx = e.path[5].dataset.idx;
     var emailDiv = e.path[5];
 
-    console.log(emailDiv);
+    //console.log(emailDiv);
+    emailDiv.style.borderBottom = 0;
     emailDiv.style.maxHeight = 0;
 
     //console.log("archiving idx: ", idx);
@@ -526,14 +540,21 @@ async function sendArchiveUpdate(idx) {
     //console.log("send message to archive", res.json());
     cache.allEmails[idx].parentFolderId = cache.archive;
     cache.allEmails[idx].displayed = false;
+    --cache.displayedCount;
     if (!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
 }
 
 async function archiveAll() {
-    emails = document.getElementsByClassName('email');
-    for (email of emails) {
-        email.style.maxHeight = 0;
-        await sendArchiveUpdate(email.dataset.idx);
+    if(cache.archivingAll){
+        cache.archivingAll = true;
+        emails = document.getElementsByClassName('email');
+        for (email of emails) {
+            email.style.maxHeight = 0;
+        }
+        for (email of emails) {
+            await sendArchiveUpdate(email.dataset.idx);
+        }
+        cache.archivingAll=false;
     }
 }
 
@@ -542,7 +563,8 @@ function deleteMessage(e) {
     var idx = e.path[5].dataset.idx;
     var emailDiv = e.path[5];
 
-    console.log(emailDiv);
+    //console.log(emailDiv);
+    emailDiv.style.borderBottom = 0;
     emailDiv.style.maxHeight = 0;
 
     //console.log("delete idx: ", idx);
@@ -571,22 +593,25 @@ async function sendDeleteUpdate(idx) {
     //console.log("send deleded message successful");
     cache.allEmails[idx].parentFolderId = cache.archive;
     cache.allEmails[idx].displayed = false;
+    --cache.displayedCount;
     if (!cache.allEmails[idx].isRead) setUnreadCount(--cache.unread);
 }
 
 
 function toggleFlag(e) {
-    var icon = e.target.firstChild;
-    var idx = e.path[5].dataset.idx;
-    var emailDiv = e.path[5];
-    var subj = e.path[2].children[1].lastChild;
-    //console.log("subj: ", subj);
+    if (!cache.flagSending) {
+        var icon = e.target.firstChild;
+        var idx = e.path[5].dataset.idx;
+        var emailDiv = e.path[5];
+        var subj = e.path[2].children[1].lastChild;
+        //console.log("subj: ", subj);
 
 
-    //console.log("flag clicked!", e, icon,idx,email);
+        //console.log("flag clicked!", e, icon,idx,email);
 
-    toggleFlagIcon(icon, subj, emailDiv);
-    sendFlagUpdate(idx);
+        toggleFlagIcon(icon, subj, emailDiv);
+        sendFlagUpdate(idx);
+    }
 
 }
 
@@ -638,6 +663,7 @@ function toggleFlagExpanded() {
 }
 
 async function sendFlagUpdate(idx) {
+    cache.flagSending = true;
     var newFlagValue = (cache.allEmails[idx].flag.flagStatus == "notFlagged" ? "flagged" : "notFlagged");
     var id = cache.allEmails[idx].id;
     //    console.log("email flag is now ", newFlagValue);
@@ -664,8 +690,9 @@ async function sendFlagUpdate(idx) {
     cache.allEmails[idx].flag.flagStatus = newFlagValue;
 
     console.log("finished talking to update flag");
-    res = await res.json();
-    console.log(res);
+    //res = await res.json();
+    //console.log(res);
+    cache.flagSending = false;
 }
 
 async function openPopup(e) {
@@ -840,7 +867,7 @@ async function initExpandedTemplate(idx) {
         for (link of links) {
             link.target = "_blank";
         }
-    }, 100);
+    }, 1000);
 
     initAttachments(email);
 
