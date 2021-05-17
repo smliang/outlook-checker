@@ -14,13 +14,32 @@ var cache = {}; //fixme will i ever have to load this cache???
 chrome.runtime.onInstalled.addListener(function () {
     //set to logout state
     console.log("starting up!");
+    chrome.storage.local.set({protocolHandlingWait: true});
     setUILogout();
-    chrome.contextMenus.onClicked.addListener((e) => {
-        if(e.menuItemId == "login") login();
-        else if(e.menuItemId == "logout") setUILogout();
-    })
-
 });
+
+chrome.contextMenus.onClicked.addListener((e) => {
+    if(e.menuItemId == "login") login();
+    else if(e.menuItemId == "logout") setUILogout();
+    else if(e.menuItemId == "mailto off") {
+        console.log("turning off mailto!");
+        chrome.tabs.create(
+            {
+                url: "chrome://settings/handlers"
+            }
+        );
+        chrome.storage.local.set({protocolHandling: false});
+    }
+    else if(e.menuItemId == "mailto on"){
+        console.log("turning on mailto!");
+        chrome.storage.local.set({protocolHandlingWait: true});
+        chrome.tabs.create(
+            {
+                url: "https://outlook.office.com/mail"
+            }
+        );
+    }
+})
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
     for (let [key, {oldValue, newValue} ] of Object.entries(changes)) {
@@ -28,6 +47,23 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
         let keyname = `${key}`;
         cache[keyname] = newValue;
         if(keyname == "refresh_token") console.log("updated " + keyname);
+        if(keyname == "protocolHandling"){
+            if(newValue){
+                chrome.contextMenus.create({
+                    title: "Turn off Mailto: Handling in Chrome Settings",
+                    id: "mailto off",
+                    contexts: ["action"]
+                }, () => chrome.contextMenus.remove("mailto on"));
+            }
+            else{
+                chrome.storage.local.set({protocolHandling: false});
+                chrome.contextMenus.create({
+                    title: "Turn on Mailto: Handling",
+                    id: "mailto on",
+                    contexts: ["action"]
+                }, () => chrome.contextMenus.remove("mailto off"));
+            }
+        }
     }
     //console.log("CACHE AFTER SAVE", cache);
 });
@@ -55,7 +91,7 @@ function setUILogout() {
         chrome.storage.local.set({ login: false })
     });
      chrome.action.setBadgeText({text: ''});
-     chrome.contextMenus.removeAll(() => {
+     chrome.contextMenus.remove("logout", () => {
          //console.log("adding browser action");
         chrome.contextMenus.create({
             title: "Login Outlook Checker",
@@ -85,7 +121,7 @@ function setUILogin() {
     chrome.action.setBadgeBackgroundColor({color: [208, 0, 24, 255]});
     chrome.action.setBadgeText({text: ''});
 
-    chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.remove("login",() => {
         chrome.contextMenus.create({
             title: "Logout Outlook Checker",
             id: "logout",

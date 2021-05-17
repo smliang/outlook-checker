@@ -25,7 +25,7 @@ document.getElementById('issue').addEventListener('click', () => {
             height: 500,
         }
     );
-})
+});
 
 let refreshButton = document.getElementById("refresh-button");
 refreshButton.addEventListener('click', onRefresh);

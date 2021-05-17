@@ -9,14 +9,18 @@
       "storage",
       "identity",
       "tabs",
-      "contextMenus"
-    ],
-    "host_permissions":[
-      "https://*/"
+      "contextMenus",
+      "activeTab"
     ],
     "background":{
         "service_worker": "background.js"
     },
+    "content_scripts":[
+      {
+        "matches": ["https://outlook.office.com/*"],
+        "js": ["js/mailto.js"]
+      }
+    ],
     "action": {
       "default_title": "Outlook Checker",
       "default_icon": { 
